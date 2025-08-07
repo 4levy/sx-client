@@ -1,0 +1,78 @@
+tokens:
+  - token: "SELFBOT TOKEN"
+    enabled: true
+    customStatus: true  # Set to true to enable custom status cycling
+    activity:
+      type: "STREAMING"
+  
+  - token: "SELFBOT TOKEN 2"
+    enabled: false  # Set to true to enable
+    customStatus: false  # Set to true to enable custom status cycling
+    activity:
+      type: "STREAMING"
+  
+
+weatherAPI:
+  key: "1e1a0f498dbf472cb3991045241608" # WeatherAPI key
+
+options:
+  location: "Bangkok" # default
+  tz: "Asia/Bangkok" # default
+  botid: "1109522937989562409" # Discord application ID for RPC
+
+setup:
+  city: "Bangkok" # City for weather data
+  delay: 10 # Update interval in seconds
+  proxy: null # Proxy configuration if needed
+
+
+voice:
+  data: "sx!" # default
+
+
+status:
+  delay: 4000 # default (MMinimum 4000)
+  data:
+    - emoji: "🧡"
+      text: "TEXT 1"
+    - emoji: "💛"
+      text: "TEXT 2"
+    - emoji: "💚"
+      text: "TEXT 3"
+    - emoji: "💙"
+      text: "TEXT 4"
+    - emoji: "💜"
+      text: "TEXT 5"
+
+
+rpc:
+  delay: 4000
+  type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
+
+  TwitchURL: "https://www.twitch.tv/4levy_z1"
+  YoutubeURL: "https://www.youtube.com/@4levy_z1"
+
+  name:
+    - "{NF3( 〈 {emoji:time} {hour:1} : {min:1} 〉 ⭒ 〈 📆 {th=date} / {en=month:3} / {en=year:2} 〉 )}"
+  state:
+    - "☆ | 💙 ╺  Shorekeeper  ྀི𓈒"
+  details:
+    - "☆★✮⋆☆★✮⋆ | ᶻ 𝘇 𐰁 "
+  assetsLargeText:
+    - "☆★✮⋆☆★✮⋆ | ᶻ 𝘇 𐰁 "
+  assetsSmallText:
+    - "Live"
+  assetsLargeImage:
+    - "https://i.postimg.cc/YqPfXhh7/Pic-2.gif"
+    - "https://i.postimg.cc/Kvh0P0sb/Acheron.jpg"
+    - "https://i.postimg.cc/CxFJtzg6/Acheron-2.gif"
+    - "https://i.postimg.cc/6QqcWgTr/Acheron-3.gif"
+    - "https://i.postimg.cc/4xBwTs44/Acheron-4.gif"
+  assetsSmallImage:
+    - "https://i.postimg.cc/YqPfXhh7/Pic-2.gif"
+  buttonFirst:
+    - name: "Watch Stream"
+      url: "https://www.twitch.tv/4levy_z1"
+  buttonSecond:
+    - name: "Join Discord"
+      url: "https://discord.gg/XDPfrU4E9G"
