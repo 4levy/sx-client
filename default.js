@@ -63,13 +63,12 @@ const BANNER = `
 `;
 
 
-// Load configuration from config.yml
 let config;
 try {
   const configPath = path.join(__dirname, "CONFIG", "config.yml");
   const fileContents = fs.readFileSync(configPath, "utf8");
   config = yaml.load(fileContents);
-  global.config = config; // Make config globally available
+  global.config = config; 
   console.log("Configuration loaded successfully from config.yml".green);
 } catch (error) {
   console.error("Error loading configuration from config.yml:", error.message.red);
@@ -92,42 +91,55 @@ class GetImage {
 
   async get(url1, url2) {
     try {
+      
       url1 = this.isValidURL(url1) ? url1 : null;
       url2 = this.isValidURL(url2) ? url2 : null;
+      
       if (!url1 && !url2) {
-        throw new Error("No Image");
+        return { bigImage: null, smallImage: null };
       }
+      
       const { getExternal } = RichPresence;
+
+      const validUrls = [url1, url2].filter(url => url !== null);
       const images = await getExternal(
         this.client,
         config.options?.botid || global.config?.options?.botid || "1109522937989562409",
-        url1,
-        url2
+        ...validUrls
       );
+      
+      let finalUrl1 = null;
+      let finalUrl2 = null;
+      
       if (images.length === 1) {
         const { url, external_asset_path } = images[0];
         if (url === url1) {
-          url1 = url.includes("attachments") ? url : external_asset_path;
-          url2 = null;
+          finalUrl1 = url.includes("attachments") ? url : external_asset_path;
         } else if (url === url2) {
-          url1 = null;
-          url2 = url.includes("attachments") ? url : external_asset_path;
+          finalUrl2 = url.includes("attachments") ? url : external_asset_path;
         }
       } else if (images.length === 2) {
         const [img1, img2] = images;
         if (img1.external_asset_path) {
           const { url, external_asset_path } = img1;
-          url1 = url.includes("attachments") ? url : external_asset_path;
+          if (url === url1) {
+            finalUrl1 = url.includes("attachments") ? url : external_asset_path;
+          } else if (url === url2) {
+            finalUrl2 = url.includes("attachments") ? url : external_asset_path;
+          }
         }
         if (img2.external_asset_path) {
           const { url, external_asset_path } = img2;
-          url2 = url.includes("attachments") ? url : external_asset_path;
+          if (url === url1) {
+            finalUrl1 = url.includes("attachments") ? url : external_asset_path;
+          } else if (url === url2) {
+            finalUrl2 = url.includes("attachments") ? url : external_asset_path;
+          }
         }
-      } else {
-        throw new Error("No Image");
       }
-      return { bigImage: url1, smallImage: url2 };
-    } catch {
+      
+      return { bigImage: finalUrl1, smallImage: finalUrl2 };
+    } catch (error) {
       return { bigImage: null, smallImage: null };
     }
   }
@@ -1722,7 +1734,7 @@ class ModClient extends Client {
           device: "Chrome",
         },
         reconnect: true,
-        intents: 32767, // All intents for selfbot
+        intents: 32767,
       },
       rest: {
         userAgentAppendix: "Discord-Selfbot/1.0.0",
@@ -1737,9 +1749,10 @@ class ModClient extends Client {
     this.TOKEN = token;
     this.config = config;
     this.customStatusEnabled = info.customStatus === true;
+    this.voiceEnabled = info.voiceEnabled === true;
     this.currentStreamingActivity = null;
     this.voiceConnections = new Map();
-    this.voiceConfig = config.voice || global.config?.voice || { data: "sx!" };
+    this.voiceConfig = config.voice || global.config?.voice || { data: "sx!", streaming: true };
     this.targetTime = info.wait;
     this.intervals = new Set();
     this.weather = new Weather(config.setup?.city || config.options?.location || global.config?.setup?.city || global.config?.options?.location || "Bangkok");
@@ -1795,24 +1808,19 @@ class ModClient extends Client {
     this.on("error", this._onError.bind(this));
     this.on("messageCreate", this._onMessage.bind(this));
 
-    // Add additional error handlers for voice connections
     this.on("voiceStateUpdate", (oldState, newState) => {
-      // Handle voice state updates gracefully
       try {
         if (newState.member.id === this.user.id) {
-          console.log(`Voice state updated for ${this.maskToken(this.TOKEN)}`);
         }
       } catch (err) {
         console.warn("Voice state update error:", err.message);
       }
     });
 
-    // Handle warning events
     this.on("warn", (warning) => {
       console.warn("Client warning:", warning);
     });
 
-    // Handle debug events (optional, for troubleshooting)
     this.on("debug", (info) => {
       if (info.includes("ERROR") || info.includes("error")) {
         console.debug("Debug info:", info);
@@ -1847,13 +1855,10 @@ class ModClient extends Client {
 
     this.restartCount = 0;
     this.startPingChecker();
-    
-    // Always start streaming RPC first
+
     this.streaming();
     
-    // Start custom status cycling only if enabled for this token  
     if (this.customStatusEnabled) {
-      // Delay custom status start to allow RPC to initialize first
       setTimeout(() => this.customStatus(), 2000);
     } else {
     }
@@ -1862,10 +1867,9 @@ class ModClient extends Client {
   _onError(error) {
     console.error("Client encountered an error:", error.message || error);
     
-    // Handle WebSocket connection errors
     if (error.message && error.message.includes("WebSocket")) {
       console.warn("WebSocket error detected, attempting to continue...");
-      return; // Don't crash on WebSocket errors
+      return;
     }
 
     if (error.message && (error.message.includes("voice") || error.message.includes("connection was established"))) {
@@ -1891,51 +1895,58 @@ class ModClient extends Client {
     }
   }
 
-  _onMessage(message) {
+  async _onMessage(message) {
     try {
       if (message.author.id !== this.user.id) return;
       
+      if (!this.voiceEnabled) {
+        console.log(`Voice commands disabled for token: ${this.maskToken(this.TOKEN)}`);
+        return;
+      }
+      
+      if (!this.voiceConfig.streaming) {
+        console.log(`Voice streaming is disabled in configuration`);
+        return;
+      }
+      
       const voiceCommand = this.voiceConfig.data || "sx!";
-      console.log(`Voice command prefix: "${voiceCommand}"`);
       
       if (!message.content.startsWith(voiceCommand + " ")) {
         console.log(`Message doesn't start with "${voiceCommand} "`);
         return;
       }
       
-      console.log(`Voice command detected!`);
       
       const args = message.content.slice(voiceCommand.length + 1).split(" ");
       const channelId = args[0];
       const command = args[1];
       
-      console.log(`Channel ID: ${channelId}, Command: ${command}`);
       
       if (!channelId) {
-        console.log(`Voice command usage: ${voiceCommand} <channelId> <live|stream|disconnect>`.yellow);
+        console.log(`No channel ID provided. Usage: ${voiceCommand} <channelId> [live|stream|disconnect|leave|list]`.yellow);
         return;
       }
       
       switch (command?.toLowerCase()) {
         case 'live':
         case 'stream':
-          console.log(`Attempting to join voice channel ${channelId} with streaming`);
-          this.connectToVoiceChannel(channelId, true, true, true);
+          await this.connectToVoiceChannel(channelId, true, true, true);
           break;
         case 'disconnect':
         case 'leave':
-          console.log(`Attempting to leave voice channel ${channelId}`);
+          console.log(`Disconnecting from channel ${channelId}...`.yellow);
           this.disconnectFromVoiceChannel(channelId);
           break;
         case 'list':
-          console.log(`Available channels:`);
+          console.log(`Available voice channels:`.cyan);
           this.channels.cache.forEach(ch => {
-            console.log(`- ${ch.name} (${ch.id}) - Type: ${ch.type}`);
+            if (ch.type === 2 || ch.type === 'GUILD_VOICE') {
+              console.log(`- ${ch.name} (${ch.id}) - Type: ${ch.type}`);
+            }
           });
           break;
         default:
-          console.log(`Attempting to join voice channel ${channelId} without streaming`);
-          this.connectToVoiceChannel(channelId, true, true, false);
+          await this.connectToVoiceChannel(channelId, true, true, false);
           break;
       }
     } catch (error) {
@@ -1948,11 +1959,8 @@ class ModClient extends Client {
       const channel = this.channels.cache.get(channelId);
       if (!channel) {
         console.log(`Channel ${channelId} not found`.red);
-        console.log(`Available channels: ${this.channels.cache.size}`);
         return;
       }
-
-      console.log(`Channel found: ${channel.name} (Type: ${channel.type})`);
 
       if (channel.type !== 2 && channel.type !== 'GUILD_VOICE') {
         console.log(`Channel ${channelId} is not a voice channel (Type: ${channel.type})`.red);
@@ -1960,22 +1968,63 @@ class ModClient extends Client {
       }
 
       const connectionOptions = { selfMute, selfDeaf, selfVideo: false };
-      console.log(`Connecting to voice channel: ${channel.name} (${channelId})`.cyan);
-      
-      let connection = await this.voice.joinChannel(channel, connectionOptions);
+      let connection = null;
+      let retryCount = 0;
+      const maxRetries = 3;
 
+      // Retry logic for voice connection
+      while (retryCount < maxRetries) {
+        try {
+          // Set a shorter timeout and handle it properly
+          const connectionPromise = this.voice.joinChannel(channel, connectionOptions);
+          connection = await Promise.race([
+            connectionPromise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Connection timeout after 10 seconds')), 10000)
+            )
+          ]);
+          
+          if (connection) {
+            break;
+          }
+        } catch (error) {
+          retryCount++;
+          
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
+
+      if (!connection) {
+        console.log(`Failed to connect to ${channel.name} after ${maxRetries} attempts`.red);
+        return;
+      }
+
+      // Handle streaming if requested
       if (createStream && connection && typeof connection.createStreamConnection === 'function') {
-        await connection.createStreamConnection().catch(() => {});
-        console.log(`Started streaming in ${channel.name}`.green);
+        try {
+          await connection.createStreamConnection();
+        } catch (streamError) {
+          console.log(`Failed to start streaming: ${streamError.message}`.red);
+        }
       }
 
       this.voiceConnections.set(channelId, connection);
 
+      // Auto-reconnect with better error handling
       const intervalId = setInterval(async () => {
         try {
-          connection = await this.voice.joinChannel(channel, connectionOptions);
-          if (createStream && connection && typeof connection.createStreamConnection === 'function') {
-            await connection.createStreamConnection().catch(() => {});
+          if (connection && connection.status === 'disconnected') {
+            connection = await this.voice.joinChannel(channel, connectionOptions);
+            
+            if (createStream && connection && typeof connection.createStreamConnection === 'function') {
+              await connection.createStreamConnection().catch(err => 
+                console.log(`Stream reconnect failed: ${err.message}`.red)
+              );
+            }
+            
+            this.voiceConnections.set(channelId, connection);
           }
         } catch (error) {
           console.error(`Auto-reconnect failed for ${channel.name}: ${error.message}`.red);
@@ -1987,7 +2036,7 @@ class ModClient extends Client {
       return connection;
     } catch (error) {
       console.error(`Failed to connect to voice channel ${channelId}: ${error.message}`.red);
-      throw error;
+      return null;
     }
   }
 
@@ -1997,7 +2046,6 @@ class ModClient extends Client {
       if (connection) {
         connection.disconnect();
         this.voiceConnections.delete(channelId);
-        console.log(`Disconnected from voice channel ${channelId}`.yellow);
       } else {
         console.log(`No active connection found for channel ${channelId}`.yellow);
       }
@@ -2177,16 +2225,44 @@ class ModClient extends Client {
         presence.setAssetsSmallText(this.SPT(text5));
       }
 
-      if (config.bigimg?.length || config.smallimg?.length) {
+      if (config.bigimg?.length) {
         try {
           const bigImg = config.bigimg[this.index.bm];
-          const smallImg = config.smallimg[this.index.sm];
-          const images = await this.getImage(bigImg, smallImg);
-          presence.setAssetsLargeImage(images.bigImage);
-          presence.setAssetsSmallImage(images.smallImage);
+          
+          let smallImg = null;
+          let useSmallImage = true;
+          
+          if (config.smallimg && Array.isArray(config.smallimg) && config.smallimg.length > 0) {
+            const smallImgValue = config.smallimg[this.index.sm];
+            
+            if (smallImgValue === null || 
+                smallImgValue === false || 
+                smallImgValue === "" || 
+                smallImgValue === "none" || 
+                smallImgValue === "disabled" ||
+                smallImgValue === "false") {
+              useSmallImage = false;
+            } else {
+              smallImg = smallImgValue;
+            }
+          } else {
+            useSmallImage = false;
+          }
+          
+          const images = await this.getImage(bigImg, useSmallImage ? smallImg : null);
+          
+          if (images.bigImage) {
+            presence.setAssetsLargeImage(images.bigImage);
+          }
+          
+          if (useSmallImage && images.smallImage) {
+            presence.setAssetsSmallImage(images.smallImage);
+          } else {
+          }
         } catch (imgError) {
           console.warn(`Failed to set images: ${imgError.message}`);
         }
+      } else {
       }
 
       if (config["button-1"]?.length) {
@@ -2777,7 +2853,8 @@ class StreamManager {
       const newClient = new ModClient(token, config, {
         wait: Date.now(),
         version: "1.0.0",
-        customStatus: true
+        customStatus: true,
+        voiceEnabled: true // Default to enabled for replacement clients
       });
 
       try {
@@ -2831,7 +2908,8 @@ class StreamManager {
           const client = new ModClient(tokenConfig.value, perTokenConfig, {
             wait: Date.now() + successCount * 5000,
             version: "1.0.0",
-            customStatus: tokenConfig.customStatus
+            customStatus: tokenConfig.customStatus,
+            voiceEnabled: tokenConfig.voiceEnabled
           });
 
           const result = await client.start();
@@ -2967,7 +3045,8 @@ class StreamManager {
           const client = new ModClient(token.value, userSpecificConfig, {
             wait: Date.now(),
             version: "1.0.0",
-            customStatus: token.customStatus === true 
+            customStatus: token.customStatus === true,
+            voiceEnabled: token.voiceEnabled === true
           });
 
           client.on("error", (error) => {
@@ -3154,6 +3233,7 @@ async function main() {
             value: token,
             enabled: tokenConfig.enabled !== false,
             customStatus: tokenConfig.customStatus === true,
+            voiceEnabled: tokenConfig.voiceEnabled === true,
             activity: tokenConfig.activity || null 
           };
         })
@@ -3188,26 +3268,6 @@ async function main() {
       console.log(`Token ${index + 1} (${maskedToken}): ${activityType}`.yellow);
     });
 
-    const transformedConfig = {
-      setup: config.setup,
-      config: {
-        options: {
-          ...config.options,
-          "watch-url": config.rpc?.url ? [config.rpc.url] : ["https://www.twitch.tv/4levy_z1"],
-          "activity-type": config.rpc?.type || "STREAMING"
-        },
-        "text-1": config.rpc?.name || ["Discord Selfbot"],
-        "text-2": config.rpc?.state || ["Active"],
-        "text-3": config.rpc?.details || ["Running"],
-        "text-4": config.rpc?.assetsLargeText || [""],
-        "text-5": config.rpc?.assetsSmallText || [""],
-        bigimg: config.rpc?.assetsLargeImage || [],
-        smallimg: config.rpc?.assetsSmallImage || [],
-        "button-1": config.rpc?.buttonFirst || [],
-        "button-2": config.rpc?.buttonSecond || []
-      }
-    };
-    
     console.clear();
     console.log(BANNER);
     const userId = "selfbot_stream";

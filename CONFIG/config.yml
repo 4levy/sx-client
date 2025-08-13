@@ -2,12 +2,14 @@ tokens:
   - token: "SELFBOT TOKEN"
     enabled: true
     customStatus: true  # Set to true to enable custom status cycling
+    voiceEnabled: true  # Set to true to enable voice commands for this token
     activity:
       type: "STREAMING"
   
   - token: "SELFBOT TOKEN 2"
     enabled: false  # Set to true to enable
     customStatus: false  # Set to true to enable custom status cycling
+    voiceEnabled: false  # Set to true to enable voice commands for this token
     activity:
       type: "STREAMING"
   
@@ -19,19 +21,17 @@ options:
   location: "Bangkok" # default
   tz: "Asia/Bangkok" # default
   botid: "1109522937989562409" # Discord application ID for RPC
-
-setup:
   city: "Bangkok" # City for weather data
-  delay: 10 # Update interval in seconds
   proxy: null # Proxy configuration if needed
 
 
 voice:
-  data: "sx!" # default
+  data: "sx!" # default voice command prefix
+  streaming: true # enable voice commands for streaming
 
 
 status:
-  delay: 4000 # default (MMinimum 4000)
+  delay: 4000 # default (Minimum 4000)
   data:
     - emoji: "🧡"
       text: "TEXT 1"
@@ -46,33 +46,37 @@ status:
 
 
 rpc:
-  delay: 4000
+  delay: 4000 # default 
   type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
 
   TwitchURL: "https://www.twitch.tv/4levy_z1"
   YoutubeURL: "https://www.youtube.com/@4levy_z1"
 
   name:
-    - "{NF3( 〈 {emoji:time} {hour:1} : {min:1} 〉 ⭒ 〈 📆 {th=date} / {en=month:3} / {en=year:2} 〉 )}"
+    - "{NF4(꒰ {hour:1} : {min:1} ꒱ ⚘ ꒰ {th=date} / {th=month:1} / {en=year:2} ꒱)}"
   state:
-    - "☆ | 💙 ╺  Shorekeeper  ྀི𓈒"
+    - "⤿ ☆★☆★☆★☆★ ༊*·˚𓈒"
   details:
-    - "☆★✮⋆☆★✮⋆ | ᶻ 𝘇 𐰁 "
+    - "{NF4(꒰ˏˋ🌡️ {temp:c} °C´ˎ꒱ ✦ ꒰ˏˋ🍃 {wind:kph} KM/H´ˎ꒱)}"
+    - "{NF4(꒰ˏˋ🌡️ {temp:f} °F´ˎ꒱ ✦ ꒰ˏˋ🍃 {wind:mph} MI/H´ˎ꒱)}"
   assetsLargeText:
-    - "☆★✮⋆☆★✮⋆ | ᶻ 𝘇 𐰁 "
+    - "⤿ ★☆★☆★☆★☆ ༊*·˚"
+    - "⤿ ☆★☆★☆★☆★ ༊*·˚"
   assetsSmallText:
-    - "Live"
+    - "Sybau"
   assetsLargeImage:
-    - "https://i.postimg.cc/YqPfXhh7/Pic-2.gif"
-    - "https://i.postimg.cc/Kvh0P0sb/Acheron.jpg"
-    - "https://i.postimg.cc/CxFJtzg6/Acheron-2.gif"
-    - "https://i.postimg.cc/6QqcWgTr/Acheron-3.gif"
-    - "https://i.postimg.cc/4xBwTs44/Acheron-4.gif"
+    - "https://i.pinimg.com/originals/9e/6d/1f/9e6d1fb0eee591c7e8df7e0e6de41e58.gif"
+    - "https://i.pinimg.com/originals/07/3d/d1/073dd1f14a95987e7f402a874df8f150.gif"
+    - "https://i.pinimg.com/originals/97/86/90/97869072bd11fab07e246478c8faa486.gif"
+    - "https://i.pinimg.com/originals/42/11/58/421158672962ca82c1d0ea5c51dbff22.gif"
+    - "https://i.pinimg.com/originals/1f/2f/a4/1f2fa47ca287ab51b7fdc4003129ab76.gif"
+    - "https://i.pinimg.com/originals/6f/af/a3/6fafa388bf857ed5d4f20fc023549b8c.gif"
+    - "https://i.pinimg.com/originals/c4/5a/e3/c45ae36ace605c2673a706178ed8facb.gif"
   assetsSmallImage:
-    - "https://i.postimg.cc/YqPfXhh7/Pic-2.gif"
+    - "none"  # Currently disabled - change to image URL to enable
   buttonFirst:
     - name: "Watch Stream"
       url: "https://www.twitch.tv/4levy_z1"
   buttonSecond:
     - name: "Join Discord"
-      url: "https://discord.gg/TSdpyMMfrU"
+      url: "https://discord.gg/XDPfrU4E9G"
