@@ -21,7 +21,6 @@ options:
   location: "Bangkok" # default
   tz: "Asia/Bangkok" # default
   botid: "1109522937989562409" # Discord application ID for RPC
-  city: "Bangkok" # City for weather data
   proxy: null # Proxy configuration if needed
 
 
@@ -33,16 +32,11 @@ voice:
 status:
   delay: 4000 # default (Minimum 4000)
   data:
-    - emoji: "🧡"
-      text: "TEXT 1"
-    - emoji: "💛"
-      text: "TEXT 2"
-    - emoji: "💚"
-      text: "TEXT 3"
-    - emoji: "💙"
-      text: "TEXT 4"
-    - emoji: "💜"
-      text: "TEXT 5"
+    - "🧡 TEXT 1"
+    - "💛 TEXT 2"
+    - "💚 TEXT 3"
+    - "💙 TEXT 4"
+    - "💜 TEXT 5"
 
 
 rpc:
@@ -73,7 +67,7 @@ rpc:
     - "https://i.pinimg.com/originals/6f/af/a3/6fafa388bf857ed5d4f20fc023549b8c.gif"
     - "https://i.pinimg.com/originals/c4/5a/e3/c45ae36ace605c2673a706178ed8facb.gif"
   assetsSmallImage:
-    - "none"  # Currently disabled - change to image URL to enable
+    - "none"
   buttonFirst:
     - name: "Watch Stream"
       url: "https://www.twitch.tv/4levy_z1"
