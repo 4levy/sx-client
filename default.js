@@ -1755,7 +1755,7 @@ class ModClient extends Client {
     this.voiceConfig = config.voice || global.config?.voice || { data: "sx!", streaming: true };
     this.targetTime = info.wait;
     this.intervals = new Set();
-    this.weather = new Weather(config.setup?.city || config.options?.location || global.config?.setup?.city || global.config?.options?.location || "Bangkok");
+    this.weather = new Weather(config.options?.location || global.config?.options?.location || "Bangkok");
     this.sys = new SystemInfo();
     this.emoji = new Emoji();
     this.textFont = new TextFont();
@@ -1972,10 +1972,8 @@ class ModClient extends Client {
       let retryCount = 0;
       const maxRetries = 3;
 
-      // Retry logic for voice connection
       while (retryCount < maxRetries) {
         try {
-          // Set a shorter timeout and handle it properly
           const connectionPromise = this.voice.joinChannel(channel, connectionOptions);
           connection = await Promise.race([
             connectionPromise,
@@ -2001,7 +1999,6 @@ class ModClient extends Client {
         return;
       }
 
-      // Handle streaming if requested
       if (createStream && connection && typeof connection.createStreamConnection === 'function') {
         try {
           await connection.createStreamConnection();
@@ -2012,7 +2009,6 @@ class ModClient extends Client {
 
       this.voiceConnections.set(channelId, connection);
 
-      // Auto-reconnect with better error handling
       const intervalId = setInterval(async () => {
         try {
           if (connection && connection.status === 'disconnected') {
@@ -2382,9 +2378,27 @@ class ModClient extends Client {
         return;
       }
 
+      // Parse the simplified format "emoji text" or use the old object format
+      let emoji, text;
+      if (typeof currentStatus === 'string') {
+        // Split the string at the first space to separate emoji from text
+        const spaceIndex = currentStatus.indexOf(' ');
+        if (spaceIndex > 0) {
+          emoji = currentStatus.substring(0, spaceIndex);
+          text = currentStatus.substring(spaceIndex + 1);
+        } else {
+          emoji = '';
+          text = currentStatus;
+        }
+      } else {
+        // Old object format for backward compatibility
+        emoji = currentStatus.emoji;
+        text = currentStatus.text;
+      }
+
       const customStatus = new CustomStatus(this)
-        .setEmoji(this.SPT(currentStatus.emoji))
-        .setState(this.SPT(currentStatus.text));
+        .setEmoji(this.SPT(emoji))
+        .setState(this.SPT(text));
 
       const currentPresence = this.user?.presence;
       let activities = [];
