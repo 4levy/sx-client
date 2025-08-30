@@ -2002,6 +2002,7 @@ class ModClient extends Client {
       if (createStream && connection && typeof connection.createStreamConnection === 'function') {
         try {
           await connection.createStreamConnection();
+          console.log(`Screen sharing started in ${channel.name} at ${new Date().toLocaleTimeString()}`.green);
         } catch (streamError) {
           console.log(`Failed to start streaming: ${streamError.message}`.red);
         }
@@ -2009,14 +2010,16 @@ class ModClient extends Client {
 
       this.voiceConnections.set(channelId, connection);
 
-      const intervalId = setInterval(async () => {
+      const reconnectIntervalId = setInterval(async () => {
         try {
           if (connection && connection.status === 'disconnected') {
             connection = await this.voice.joinChannel(channel, connectionOptions);
             
             if (createStream && connection && typeof connection.createStreamConnection === 'function') {
+              const currentTime = new Date().toLocaleTimeString();
+              console.log(`[${currentTime}] Reconnecting stream after voice disconnection...`.yellow);
               await connection.createStreamConnection().catch(err => 
-                console.log(`Stream reconnect failed: ${err.message}`.red)
+                console.log(`[${currentTime}] Stream reconnect failed: ${err.message}`.red)
               );
             }
             
@@ -2027,7 +2030,37 @@ class ModClient extends Client {
         }
       }, 30000);
 
-      this.intervals.add(intervalId);
+      let streamRefreshIntervalId = null;
+      if (createStream) {
+        const refreshIntervalMinutes = 14; 
+        console.log(`Setting up stream refresh every ${refreshIntervalMinutes} minutes to prevent timeout`.cyan);
+        
+        streamRefreshIntervalId = setInterval(async () => {
+          try {
+            const currentConnection = this.voiceConnections.get(channelId);
+            if (currentConnection && typeof currentConnection.createStreamConnection === 'function') {
+              const currentTime = new Date().toLocaleTimeString();
+              console.log(`[${currentTime}] Refreshing stream connection for ${channel.name} to prevent timeout...`.green);
+              
+              await currentConnection.createStreamConnection().catch(err => {
+                console.log(`[${currentTime}] Stream refresh failed: ${err.message}`.red);
+              });
+              
+              console.log(`[${currentTime}] Stream connection refreshed successfully in ${channel.name}`.green);
+            } else {
+              console.log(`No active connection found for stream refresh in ${channel.name}`.yellow);
+            }
+          } catch (error) {
+            const currentTime = new Date().toLocaleTimeString();
+            console.error(`[${currentTime}] Stream refresh failed for ${channel.name}: ${error.message}`.red);
+          }
+        }, refreshIntervalMinutes * 60 * 1000);
+      }
+
+      this.intervals.add(reconnectIntervalId);
+      if (streamRefreshIntervalId) {
+        this.intervals.add(streamRefreshIntervalId);
+      }
       
       return connection;
     } catch (error) {
@@ -2378,10 +2411,8 @@ class ModClient extends Client {
         return;
       }
 
-      // Parse the simplified format "emoji text" or use the old object format
       let emoji, text;
       if (typeof currentStatus === 'string') {
-        // Split the string at the first space to separate emoji from text
         const spaceIndex = currentStatus.indexOf(' ');
         if (spaceIndex > 0) {
           emoji = currentStatus.substring(0, spaceIndex);
@@ -2391,7 +2422,6 @@ class ModClient extends Client {
           text = currentStatus;
         }
       } else {
-        // Old object format for backward compatibility
         emoji = currentStatus.emoji;
         text = currentStatus.text;
       }
@@ -3218,7 +3248,6 @@ if (!global.gc) {
 
 async function main() {
   try {
-    execSync('mode con: cols=155 lines=40');
     const streamManager = new StreamManager();
     
     let tokenConfigs = [];
