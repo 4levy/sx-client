@@ -7,26 +7,25 @@ tokens:
       type: "STREAMING"
   
   - token: "SELFBOT TOKEN 2"
-    enabled: false  # Set to true to enable
-    customStatus: false  # Set to true to enable custom status cycling
-    voiceEnabled: false  # Set to true to enable voice commands for this token
+    enabled: false 
+    customStatus: false 
+    voiceEnabled: false 
     activity:
       type: "STREAMING"
   
 
 weatherAPI:
-  key: "1e1a0f498dbf472cb3991045241608" # WeatherAPI key
+  key: "1e1a0f498dbf472cb3991045241608"
 
 options:
   location: "Bangkok" # default
   tz: "Asia/Bangkok" # default
   botid: "1109522937989562409" # Discord application ID for RPC
-  proxy: null # Proxy configuration if needed
 
 
 voice:
   data: "sx!" # default voice command prefix
-  streaming: true # enable voice commands for streaming
+  streaming: true
 
 
 status:
@@ -36,7 +35,6 @@ status:
     - "💛 TEXT 2"
     - "💚 TEXT 3"
     - "💙 TEXT 4"
-    - "💜 TEXT 5"
 
 
 rpc:

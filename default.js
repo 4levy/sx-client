@@ -1,4 +1,5 @@
 // If it worked, don't touch anything.
+// free shit atleast it works
 
 const { Client, RichPresence, CustomStatus } = require("discord.js-selfbot-v13");
 const moment = require("moment-timezone");
@@ -8,9 +9,9 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require('child_process');
 const yaml = require("js-yaml");
+require("colors");
 const fetch = (...args) =>
 import("node-fetch").then(({ default: fetch }) => fetch(...args));
-require("colors");
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error.message);
@@ -25,41 +26,16 @@ process.on('error', (error) => {
 });
 
 const BANNER = `
-                                                                                            :                                    -@                      
-                                                                                            -                @  +     .%#.  @@@            .*           
-                                                                                            *.   :         @%++.    ###%%%%@:                %          
-                                                                                            *+. .=       @@@==   #######%                    @          
-                                                                                            ++ .=    # @@@@@@@%%####%+*###:*.:.         #.   @          
-                                                                                        . :+=+=@ +##-@@@@%####%#@%%%%%#++==+:::--           @          
-                                                                                            *++  @**.@@%#####@#+*#=+=--====-::: .::...       #           
-                                                                                        .+++:.@-@@@*%+=##-*#--+-**-==--:-##--::::..... .  -@           
-                                                                                            ++++@@@@*+%@#@@%#####*####+==::::++++:::...+:.  @@            
-                                                                                        .++#@@@@@=@@@@@@@@@@@%#####=*-::::::..::---::+:. @@             
-                                                                                        +@+@@@@@@@@@@@@@@@@@@%%++=-#+--::::*%  ::----- @@@ =            
-                                                                                        .*++@@#@*%+*@@%%%@@@@@@@===**:-:::-%@##   ==-- @@@@ :.            
-                                                                                        *+*+=%*=#*=@@@@@@@@@@@@%##+===:::%@@@@   +:  @@@@   ..            
-                                                                                        *+=++++*+#++@@@@@@@@@@@@@#+++==%@@@@@=   =@@@#@-    .             
-                                                                                    #+@#++*++*@@@@@##@@%@@#####**+=@@@@@@.    @@@@@%.                  
-                                                                                    *%****%%@@@@@@      @  #**+*+@@@@@@@ @@  @@@.  +%.   @@*           
-                                                                                    #**@%%%@@:+*        %   =-:=#@@@*+@@@@@ @@###:#-  %%@@             
-                                                                                    ##*%%%+                  .**+@@:@%@@@@@ +*+##*#   %%%     :@        
-                                                                                    ###%%#                    #*..@-@@@@@@ .#****##*+ #.  +%%%%.         
-                                                                                    %@%%%                    *   @@@@@+.@@@@**+%%@@  ####=#%%@           
-                                                                                                        - ::   .#@*.#+:@@@%@@@@@%%***%%##@@@%             
-                                                                                                        --::::..#@%%%%#%##**+***#*%%#@@@                
-                                                                                                        .-#@@#####%%%%%#*+++++**##%%@                   
-                                                                                                    ......*#%####=-==-##* +++++*.*.                       
-                                                                                        ....  ::::::::::+*#*++=+*#****.*+++ +++++++*.                    
-                                                                                            .::......++-+++**++++*+*.====+=++=.++++*                      
-                                                                                        ::::::.-=--++++++-=+=+.   .:=-----=:                           
-                                                                                        :::::::::==++++==+.  -: ......:---                             
-                                                                                        .:...::::..:=====..   .::====.. ....                              
-                                                                                    ....::::. ==:===:    .==-==..                                      
-                                                                                    .....:.  =-  :.      ====   ..                                      
-                                                                                    ....  -        .  ==-                                              
-                                                                                                    . =:                                                 
-
-
+                      @@@@@          -@@@@                        
+                     @@@%*#%%@     .@@@@@@@                 
+                     -@@@@%@@@@#   @@@@@@@.*               
+                     @@@@* @@@@@@@@@@@%@@#@                       
+                          @@@@@ =+@@                              
+                       =@@@@@@@   @%@@@                          
+                     +@@%@@@@%     @@@@@@@                         
+                    :@@@@@@          -%@%#*@@@                    
+                       @@@               @@@@*                    
+                        @                                         
 `;
 
 
@@ -146,8 +122,8 @@ class GetImage {
 }
 
 class Weather {
-  constructor(location) {
-    this.location = location;
+  constructor(tz) {
+    this.tz = tz;
     this.feelslike_c = 0;
     this.feelslike_f = 0;
     this.windchill_c = 0;
@@ -162,14 +138,14 @@ class Weather {
     this.so2 = 0;
     this.pm10 = 0;
     this.stop = 0;
-    schedule("*/5 * * * *", () => this.update());
+  schedule("*/5 * * * *", () => this.update());
   }
 
   async update() {
     try {
       const params = new URLSearchParams();
       params.append("key", config.weatherAPI?.key || global.config?.weatherAPI?.key || "1e1a0f498dbf472cb3991045241608");
-      params.append("q", encodeURIComponent(this.location));
+      params.append("q", encodeURIComponent(this.tz));
       params.append("aqi", "yes");
       const response = await fetch(
         `https://api.weatherapi.com/v1/current.json?${params}`
@@ -1713,7 +1689,6 @@ class ModClient extends Client {
     super({
       checkUpdate: false,
       autoRedeemNitro: false,
-      proxy: config.setup?.proxy || undefined,
       captchaKey: null,
       captchaService: null,
       DMSync: false,
@@ -1755,7 +1730,7 @@ class ModClient extends Client {
     this.voiceConfig = config.voice || global.config?.voice || { data: "sx!", streaming: true };
     this.targetTime = info.wait;
     this.intervals = new Set();
-    this.weather = new Weather(config.options?.location || global.config?.options?.location || "Bangkok");
+  this.weather = new Weather(config.options?.tz || global.config?.options?.tz || "Asia/Bangkok");
     this.sys = new SystemInfo();
     this.emoji = new Emoji();
     this.textFont = new TextFont();
@@ -2401,13 +2376,14 @@ class ModClient extends Client {
         return;
       }
 
-      if (!this.statusIndex) {
+      if (typeof this.statusIndex === 'undefined') {
         this.statusIndex = 0;
       }
 
       const currentStatus = statusConfig.data[this.statusIndex];
       if (!currentStatus) {
         console.log("Invalid status configuration");
+        this.statusIndex = 0;
         return;
       }
 
@@ -2415,15 +2391,15 @@ class ModClient extends Client {
       if (typeof currentStatus === 'string') {
         const spaceIndex = currentStatus.indexOf(' ');
         if (spaceIndex > 0) {
-          emoji = currentStatus.substring(0, spaceIndex);
-          text = currentStatus.substring(spaceIndex + 1);
+          emoji = currentStatus.substring(0, spaceIndex).trim();
+          text = currentStatus.substring(spaceIndex + 1).trim();
         } else {
           emoji = '';
-          text = currentStatus;
+          text = currentStatus.trim();
         }
       } else {
-        emoji = currentStatus.emoji;
-        text = currentStatus.text;
+        emoji = currentStatus.emoji || '';
+        text = currentStatus.text || currentStatus;
       }
 
       const customStatus = new CustomStatus(this)
@@ -3165,7 +3141,6 @@ class StreamManager {
         }
         this.activeStreams.delete(userId);
         activeStreamsManager.removeUser(userId);
-        console.log(`Removed user ${userId} from active streams`);
         return true;
       } catch (error) {
         console.error(`Error stopping streams for user ${userId}:`, error);
@@ -3248,6 +3223,7 @@ if (!global.gc) {
 
 async function main() {
   try {
+    console.clear();
     const streamManager = new StreamManager();
     
     let tokenConfigs = [];
@@ -3300,7 +3276,7 @@ async function main() {
     }
     
     if (tokenConfigs.length === 0) {
-      console.error("Please set at least one valid Discord token in CONFIG/config.yml".red);
+      console.error("Pleae set at least one valid Discord token in CONFIG/config.yml".red);
       console.error("Make sure to set enabled: true for the tokens you want to use".yellow);
       process.exit(1);
     }
@@ -3313,9 +3289,7 @@ async function main() {
 
     console.clear();
     console.log(BANNER);
-    const userId = "selfbot_stream";
-    
-    console.log(`Starting streaming with ${tokenConfigs.length} token(s) from config.yml...`.yellow);
+    const userId = "wikoajnksd";
     
     const result = await streamManager.startStreamWithConfigs(userId, tokenConfigs, config);
     
