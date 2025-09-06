@@ -4,7 +4,7 @@ tokens:
     customStatus: true  # Set to true to enable custom status cycling
     voiceEnabled: true  # Set to true to enable voice commands for this token
     activity:
-      type: "STREAMING"
+      type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
   
   - token: "SELFBOT TOKEN 2"
     enabled: false 
@@ -12,7 +12,6 @@ tokens:
     voiceEnabled: false 
     activity:
       type: "STREAMING"
-  
 
 weatherAPI:
   key: "1e1a0f498dbf472cb3991045241608"
@@ -20,7 +19,7 @@ weatherAPI:
 options:
   location: "Bangkok" # default
   tz: "Asia/Bangkok" # default
-  botid: "1109522937989562409" # Discord application ID for RPC
+  botid: "1109522937989562409"
 
 
 voice:
@@ -38,8 +37,11 @@ status:
 
 
 rpc:
-  delay: 4000 # default 
-  type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
+  delay: 4000 # default
+
+  # for LISTENING, epoch milliseconds
+  startTimestamp: 1815670308000 
+  endTimestamp: 1830688430000   
 
   TwitchURL: "https://www.twitch.tv/4levy_z1"
   YoutubeURL: "https://www.youtube.com/@4levy_z1"
