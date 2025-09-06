@@ -2193,7 +2193,17 @@ class ModClient extends Client {
         .setApplicationId(applicationId)
         .setType(activityType);
 
-      if (activityType === "STREAMING" && watchUrl) {
+      if (activityType === "LISTENING") {
+        if (global.config.rpc && global.config.rpc.startTimestamp && global.config.rpc.endTimestamp) {
+          const start = Number(global.config.rpc.startTimestamp);
+          const end = Number(global.config.rpc.endTimestamp);
+          const total = end - start;
+          const current = Date.now() % total;  
+          
+          presence.setStartTimestamp(Date.now() - current) 
+                 .setEndTimestamp(Date.now() + (total - current));
+        }
+      } else if (activityType === "STREAMING" && watchUrl) {
         presence.setURL(watchUrl);
       }
 
@@ -3022,8 +3032,8 @@ class StreamManager {
         "text-5": activity.assetsSmallText || globalConfig.rpc?.assetsSmallText || [""],
         bigimg: activity.assetsLargeImage || globalConfig.rpc?.assetsLargeImage || [],
         smallimg: activity.assetsSmallImage || globalConfig.rpc?.assetsSmallImage || [],
-        "button-1": activity.buttonFirst || globalConfig.rpc?.buttonFirst || [],
-        "button-2": activity.buttonSecond || globalConfig.rpc?.buttonSecond || []
+        "button-1": (activity.buttonFirst?.[0]?.name === "none" || globalConfig.rpc?.buttonFirst?.[0]?.name === "none") ? [] : (activity.buttonFirst || globalConfig.rpc?.buttonFirst || []),
+        "button-2": (activity.buttonSecond?.[0]?.name === "none" || globalConfig.rpc?.buttonSecond?.[0]?.name === "none") ? [] : (activity.buttonSecond || globalConfig.rpc?.buttonSecond || [])
       }
     };
   }
