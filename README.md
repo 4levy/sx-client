@@ -1,5 +1,8 @@
 - leave a star for more fix & update
+  - Youtube : https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX
 ---
+
+
 <p align="center">
   <a href="https://star-history.com/#4levy/sx-client&Tips-Discord/Cwelium&Date&theme=dark">
     <img src="https://api.star-history.com/svg?repos=4levy/sx-client&type=Date&theme=dark"">
