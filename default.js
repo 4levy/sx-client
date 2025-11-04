@@ -25,19 +25,27 @@ process.on('error', (error) => {
   console.error('Process Error:', error.message);
 });
 
-const BANNER = `
-                      @@@@@          -@@@@                        
-                     @@@%*#%%@     .@@@@@@@                 
-                     -@@@@%@@@@#   @@@@@@@.*               
-                     @@@@* @@@@@@@@@@@%@@#@                       
-                          @@@@@ =+@@                              
-                       =@@@@@@@   @%@@@                          
-                     +@@%@@@@%     @@@@@@@                         
-                    :@@@@@@          -%@%#*@@@                    
-                       @@@               @@@@*                    
-                        @                                         
-`;
+const ASICII = `
+               @    @@@                        @         
+              @@ @@@@                   %@@@@@%          
+             @@ @@@    @*      %@@@@@@@@@@@%             
+            #@@@@ @@@@@       @@@@@@@@@@@@@@@@@@         
+            @@@@@@@@#       @@@@@@@@@@@#@@@@%            
+            %@@@@@@@@@%@     @@@@@@@@@@@@%               
+             %@@@@@@@@@@@@# %@@@@@@@@ @@%@               
+   0nyx         @@@@@@@@@@ @@@@@@@@@@@                    
+                 @@@@@@@@@@@@@@@@@@@@                    
+                  %@@@@@@@@@@@@@@@@@%                    
+                  @@@@@@@@@@@@@@                         
+                 @@@@@@@@@@@@@@@@        %               
+                 @@@@@@@@@@@@@@@@@@@@@%  @               
+                @@    +@@@@@@@@@@@@@@@@#                 
+                %     @@@  @ %@@@@@@%@@                  
+                       %@ @    %%@  %                    
+                        #@@                              
+                        # %                              
 
+`
 
 let config;
 try {
@@ -2539,6 +2547,12 @@ class ModClient extends Client {
         "hour:2": currentMoment.format("hh"),
         "min:1": currentMoment.format("mm"),
         "min:2": currentMoment.format("mm A"),
+        // Time (EN)
+        "time:en:24": currentMomentEN.format("HH:mm"),         // 24-hour
+        "time:en:12": currentMomentEN.format("hh:mm A"),       // 12-hour
+        "hour:en": currentMomentEN.format("hh"),               // Hour only
+        "minute:en": currentMomentEN.format("mm"),             // Minute only
+        "ampm:en": currentMomentEN.format("A"),                // AM/PM
         // Thai Date
         "th=date": currentMoment.format("D"),
         "th=week:1": currentMoment.format("ddd"),
@@ -2559,7 +2573,6 @@ class ModClient extends Client {
         "en=month:3": currentMoment.locale("en").format("MMMM"),
         "en=year:1": currentMoment.locale("en").format("YY"),
         "en=year:2": currentMoment.locale("en").format("YYYY"),
-
         // Weather - using defaults if data isn't loaded yet
         city: weather.city || "Unknown",
         region: weather.region || "",
@@ -3298,13 +3311,13 @@ async function main() {
     });
 
     console.clear();
-    console.log(BANNER);
+    console.log(ASICII);
     const userId = "wikoajnksd";
     
     const result = await streamManager.startStreamWithConfigs(userId, tokenConfigs, config);
     
     console.clear();
-    console.log(BANNER);
+    console.log(ASICII);
     if (result.success) {
       console.log(`Successfully started ${result.successCount}/${result.totalCount} stream(s)`.green);
       if (result.failedCount > 0) {
