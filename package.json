@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "colors": "^1.4.0",
+    "debug": "^4.4.3",
     "discord.js-selfbot-v13": "^3.7.0",
     "js-yaml": "^4.1.0",
     "moment-timezone": "^0.6.0",
