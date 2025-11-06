@@ -1,0 +1,17 @@
+- leave a star for more fix & update
+  - Youtube : https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX
+---
+
+
+<p align="center">
+  <a href="https://star-history.com/#4levy/sx-client&Tips-Discord/sx-client&Date&theme=dark">
+    <img src="https://api.star-history.com/svg?repos=4levy/sx-client&type=Date&theme=dark"">
+  </a>
+</p>
+
+
+<p align="center">
+    <img width="80" height="80" alt="7c78bc60bc59967f07afb18eed6f3971" src="https://github.com/user-attachments/assets/bcf38366-a01f-4698-8387-7ca4b1b09c15" />
+  </a>
+</p>
+

@@ -1,0 +1,68 @@
+tokens:
+  - token: "SELFBOT TOKEN"
+    enabled: true
+    customStatus: true  # / true 
+    voiceEnabled: true  # / true
+    activity:
+      type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
+  
+  - token: "SELFBOT TOKEN 2"
+    enabled: false 
+    customStatus: false 
+    voiceEnabled: false 
+    activity:
+      type: "STREAMING"
+
+weatherAPI:
+  key: "1e1a0f498dbf472cb3991045241608"
+
+options:
+  location: "Bangkok" # default
+  tz: "Asia/Bangkok" # default
+  botid: "1109522937989562409"
+
+
+voice:
+  data: "sx!" # default voice command prefix
+  streaming: true
+
+
+status:
+  delay: 4000 # default (Minimum 4000)
+  data:
+    - "🧡 TEXT 1"
+    - "💛 TEXT 2"
+    - "💚 TEXT 3"
+    - "💙 TEXT 4"
+
+
+rpc:
+  delay: 4000 # default
+
+  # for LISTENING, epoch milliseconds
+  startTimestamp: 1815670308000 
+  endTimestamp: 1830688430000   
+
+  TwitchURL: "https://www.twitch.tv/4levy_z1"
+  YoutubeURL: "https://www.youtube.com/@4levy_z1"
+
+  name:
+    - " ୨୧￤ {time:en:12} : 𓆩 ೀ 𓆪 {en=year:2} "
+  state:
+    - "꒰ঌ ꒰ ˶>⸝⸝⸝<˵ ྀི꒱ ໒꒱"
+  details:
+    - "𓆩𓁺𓆪"
+  assetsLargeText:
+    - "0nyx"
+  assetsSmallText:
+    - "ଘ꒰ྀི^ ˕ ິ^  ྀི꒱"
+  assetsLargeImage:
+    - "https://i.postimg.cc/DzRFzTV6/angel_angelcore_aesthetic_fantasy_creatures_fantasy.jpg"
+  assetsSmallImage:
+    - "https://i.pinimg.com/1200x/e6/b4/a7/e6b4a73f43ab3fdaed7c6af5b814dedd.jpg"
+  buttonFirst:
+    - name: "> Bio <"
+      url: "https://0nyx-wha.vercel.app/"
+  buttonSecond:
+    - name: "[ Server ]"
+      url: "https://discord.gg/pQVtDP8GEE"
