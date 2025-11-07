@@ -1,57 +1,51 @@
-tokens:
-  - token: "SELFBOT TOKEN"
-    enabled: true
+INPUTS:
+  - token: "value"
     customStatus: true  # / true 
     voiceEnabled: true  # / true
     activity:
       type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
-  
-  - token: "SELFBOT TOKEN 2"
-    enabled: false 
-    customStatus: false 
-    voiceEnabled: false 
+
+  - token: "value 2"
+    customStatus: false  # / true 
+    voiceEnabled: false  # / true
     activity:
-      type: "STREAMING"
+      type: "LISTENING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
 
-weatherAPI:
-  key: "1e1a0f498dbf472cb3991045241608"
-
-options:
+OPTIONS:
   location: "Bangkok" # default
   tz: "Asia/Bangkok" # default
-  botid: "1109522937989562409"
 
+VOICE:
+  data: "sx!" # Default | join sx!join <vcid> - leave sx!leave
 
-voice:
-  data: "sx!" # default voice command prefix
-  streaming: true
-
-
-status:
+STATUS:
   delay: 4000 # default (Minimum 4000)
   data:
-    - "🧡 TEXT 1"
-    - "💛 TEXT 2"
-    - "💚 TEXT 3"
-    - "💙 TEXT 4"
+    - emoji: "🧡"
+      text: "TEXT 1"
+    - emoji: "💛"
+      text: "TEXT 2"
+    - emoji: "💚"
+      text: "TEXT 3"
+    - emoji: "💙"
+      text: "TEXT 4"
+    - emoji: "💜"
+      text: "TEXT 5"
 
+RPC:
+  delay: 4000 # default (Minimum 4000)
 
-rpc:
-  delay: 4000 # default
-
-  # for LISTENING, epoch milliseconds
-  startTimestamp: 1815670308000 
-  endTimestamp: 1830688430000   
+  timestamp:
+      #start: "2025-09-02T07:45:34.593Z" # ISO8601 | timestamp in milliseconds
+      #end: "2029-12-31T17:00:00.000Z" # ISO8601 | timestamp in milliseconds
 
   TwitchURL: "https://www.twitch.tv/4levy_z1"
-  YoutubeURL: "https://www.youtube.com/@4levy_z1"
+  # YoutubeURL: "https://www.youtube.com/@4levy"
 
-  name:
+  details:
     - " ୨୧￤ {time:en:12} : 𓆩 ೀ 𓆪 {en=year:2} "
   state:
     - "꒰ঌ ꒰ ˶>⸝⸝⸝<˵ ྀི꒱ ໒꒱"
-  details:
-    - "𓆩𓁺𓆪"
   assetsLargeText:
     - "0nyx"
   assetsSmallText:
@@ -61,8 +55,8 @@ rpc:
   assetsSmallImage:
     - "https://i.pinimg.com/1200x/e6/b4/a7/e6b4a73f43ab3fdaed7c6af5b814dedd.jpg"
   buttonFirst:
-    - name: "> Bio <"
+    - label: "> Bio <"
       url: "https://0nyx-wha.vercel.app/"
   buttonSecond:
-    - name: "[ Server ]"
+    - label: "[ Server ]"
       url: "https://discord.gg/pQVtDP8GEE"

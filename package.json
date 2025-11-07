@@ -1,5 +1,5 @@
 {
-  "version": "0.0.4",
+  "version": "0.0.5",
   "dependencies": {
     "colors": "^1.4.0",
     "debug": "^4.4.3",
@@ -7,6 +7,7 @@
     "js-yaml": "^4.1.0",
     "moment-timezone": "^0.6.0",
     "node-cron": "^4.2.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "systeminformation": "^5.27.11"
   }
 }
