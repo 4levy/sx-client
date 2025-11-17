@@ -130,7 +130,6 @@ class Weather {
   constructor(tz) {
     this.tz = tz;
 
-    // === Location Info ===
     this.name = "";
     this.region = "";
     this.country = "";
@@ -139,7 +138,6 @@ class Weather {
     this.tz_id = "";
     this.localtime = "";
 
-    // === Current Conditions ===
     this.last_updated = "";
     this.temp_c = 0;
     this.temp_f = 0;
@@ -199,7 +197,6 @@ class Weather {
       const response = await fetch(`https://api.weatherapi.com/v1/current.json?${params}`);
       const data = await response.json();
 
-      // === Location ===
       this.name = data.location.name;
       this.region = data.location.region;
       this.country = data.location.country;
@@ -208,7 +205,6 @@ class Weather {
       this.tz_id = data.location.tz_id;
       this.localtime = data.location.localtime;
 
-      // === Current Conditions ===
       this.last_updated = data.current.last_updated;
       this.temp_c = data.current.temp_c;
       this.temp_f = data.current.temp_f;
@@ -217,7 +213,6 @@ class Weather {
       this.condition.icon = data.current.condition.icon;
       this.condition.code = data.current.condition.code;
 
-      // === Environment & Metrics ===
       this.wind_mph = data.current.wind_mph;
       this.wind_kph = data.current.wind_kph;
       this.wind_degree = data.current.wind_degree;
@@ -902,7 +897,6 @@ class NyxClient extends Client {
       messageSweepInterval: 120,
     });
 
-    // Parse config structure - FIXED: Properly handle STATUS config
     const inputs = config.INPUTS || config.inputs || [{}];
     const input = Array.isArray(inputs) ? inputs[0] : inputs;
     const options = config.OPTIONS || config.options || {};
@@ -923,7 +917,6 @@ class NyxClient extends Client {
     };
     this.intervals = new Set();
 
-    // Initialize modules with config options
     this.weather = new Weather(options.tz || "Asia/Bangkok");
     this.sys = new SystemInfo();
     this.emoji = new Emoji();
@@ -931,7 +924,6 @@ class NyxClient extends Client {
     this.getExternal = new GetExternalImage(this);
     this.cacheImage = new Map();
 
-    // Status configuration - FIXED: Use the correct status object
     this.statusConfig = {
       delay: status.delay || 4000,
       data: status.data || []
@@ -955,13 +947,11 @@ class NyxClient extends Client {
     };
 
 
-    // Library tracking
     this.lib = {
       count: 0,
       timestamp: 0,
     };
 
-    // Index tracking for rotating arrays
     this.index = {
       url: 0,
       status: 0,
@@ -981,7 +971,6 @@ class NyxClient extends Client {
     this.lastConnectionCheck = Date.now();
     this.isRunningStream = false;
 
-    // Event handlers
     this.on("disconnect", () => {
       fuck_logger("warning", `Client disconnected for token: ${this.maskToken(this.TOKEN)}`);
     });
@@ -1044,14 +1033,12 @@ class NyxClient extends Client {
       setTimeout(() => this.customStatus(), 2000);
     } else {
       if (!this.customStatusEnabled) {
-        fuck_logger("warning", "Custom status is disabled in config");
+        fuck_logger("log", "Custom status is disabled in config");
       } else if (!Array.isArray(statusData) || statusData.length === 0) {
         fuck_logger("warning", "No valid custom status data found");
       }
     }
   }
-
-
 
   _onError(error) {
     fuck_logger("error", `Client encountered an error: ${error.message || error}`);
@@ -1083,7 +1070,7 @@ class NyxClient extends Client {
       if (message.author.id !== this.user.id) return;
       
       if (!this.voiceEnabled) {
-        fuck_logger("warning", `Voice commands disabled for token: ${this.maskToken(this.TOKEN)}`);
+        fuck_logger("log", `Voice commands disabled for token: ${this.maskToken(this.TOKEN)}`);
         return;
       }
       
@@ -1226,6 +1213,25 @@ class NyxClient extends Client {
     this.intervals.add(checkerId);
   }
 
+  getDefaultActivityName(activityType, platform) {
+    if (platform) return platform;
+    
+    switch (activityType) {
+      case "STREAMING":
+        return "Streaming";
+      case "PLAYING":
+        return "Playing";
+      case "LISTENING":
+        return "Listening to";
+      case "WATCHING":
+        return "Watching";
+      case "COMPETING":
+        return "Competing in";
+      default:
+        return "Activity";
+    }
+  }
+
   async streaming() {
     if (this.isRunningStream) return;
 
@@ -1298,6 +1304,7 @@ class NyxClient extends Client {
       } else if (this.activityType === "STREAMING" && watchUrl) {
         presence.setURL(watchUrl);
       }
+      
       const details = this.getNextItem(this.rpcConfig.details, 'details');
       let activityName;
 
@@ -1397,7 +1404,6 @@ class NyxClient extends Client {
             activities: [presence],
             status: "online",
           });
-          fuck_logger("success", "Presence updated successfully");
         } catch (presenceError) {
           fuck_logger("warning", `Failed to update presence: ${presenceError.message}`);
         }
@@ -1423,8 +1429,6 @@ class NyxClient extends Client {
     this.index.bt_1 = (this.index.bt_1 + 1) % Math.max(1, this.rpcConfig.buttonFirst?.length || 1);
     this.index.bt_2 = (this.index.bt_2 + 1) % Math.max(1, this.rpcConfig.buttonSecond?.length || 1);
   }
-
-
 
   async customStatus() {
     try {
@@ -1488,7 +1492,6 @@ class NyxClient extends Client {
       setTimeout(() => this.customStatus(), 10000);
     }
   }
-
 
   async getImage(bigImg, smallImg) {
     try {
@@ -1823,7 +1826,7 @@ class NyxClient extends Client {
   }
 }
 
-class StreamManager {
+class nyx {
   constructor() {
     this.activeClients = new Map();
   }
@@ -1907,7 +1910,7 @@ class StreamManager {
 async function main() {
   try {
     console.clear();
-    const streamManager = new StreamManager();
+    const streamManager = new nyx();
     
     fuck_logger("success", "Loaded");
     
@@ -1940,4 +1943,4 @@ if (require.main === module) {
   main().catch(console.error);
 }
 
-module.exports = new StreamManager();
+module.exports = new nyx();

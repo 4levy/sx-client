@@ -1,5 +1,5 @@
 {
-  "version": "0.0.5",
+  "version": "0.0.5c",
   "dependencies": {
     "colors": "^1.4.0",
     "debug": "^4.4.3",

@@ -1,7 +1,7 @@
 INPUTS:
   - token: "value"
-    customStatus: true  # / true 
-    voiceEnabled: true  # / true
+    customStatus: true  # / false 
+    voiceEnabled: true  # / false
     activity:
       type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
 
@@ -35,6 +35,7 @@ STATUS:
 RPC:
   delay: 4000 # default (Minimum 4000)
 
+  # this for type listening only
   timestamp:
       #start: "2025-09-02T07:45:34.593Z" # ISO8601 | timestamp in milliseconds
       #end: "2029-12-31T17:00:00.000Z" # ISO8601 | timestamp in milliseconds
