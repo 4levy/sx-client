@@ -1,7 +1,8 @@
 - leave a star for more fix & update
-  - Youtube : https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX
----
+  - [Video](https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX) 
+  - [Website](https://0nyx-wha.vercel.app/config/suckmadick)
 
+---
 
 <p align="center">
   <a href="https://star-history.com/#4levy/sx-client&Tips-Discord/sx-client&Date&theme=dark">
