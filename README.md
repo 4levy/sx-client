@@ -5,6 +5,20 @@
 
 ---
 
+
+<details>
+<summary>Click to view Preview</summary>
+
+| Preview   | Image |
+|-----------|-------|
+| Listening | ![Listening Preview](https://github.com/user-attachments/assets/ea2b8868-8861-44f9-8f03-15491c18939c) |
+| Streaming | ![Streaming Preview](https://github.com/user-attachments/assets/3f5564e5-a31b-4d17-bf27-c560dadb48cb) |
+
+</details>
+
+
+---
+
 <p align="center">
   <a href="https://star-history.com/#4levy/sx-client&Tips-Discord/sx-client&Date&theme=dark">
     <img src="https://api.star-history.com/svg?repos=4levy/sx-client&type=Date&theme=dark"">
