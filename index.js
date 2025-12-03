@@ -4,6 +4,7 @@
 // rewritten
 
 const { Client, RichPresence, CustomStatus } = require("discord.js-selfbot-v13");
+const { Streamer, Utils, prepareStream, playStream } = require("@dank074/discord-video-stream");
 const moment = require("moment-timezone");
 const { schedule } = require("node-cron");
 const os = require("os");
@@ -414,77 +415,6 @@ class Emoji {
 class TextFont {
   getFont1(text) {
     const fontMap = {
-      a: "๐",
-      b: "๑",
-      c: "๒",
-      d: "๓",
-      e: "๔",
-      f: "๕",
-      g: "๖",
-      h: "๗",
-      i: "๘",
-      j: "๙",
-      k: "๐",
-      l: "๑",
-      m: "๒",
-      n: "๓",
-      o: "๔",
-      p: "๕",
-      q: "๖",
-      r: "๗",
-      s: "๘",
-      t: "๙",
-      u: "๐",
-      v: "๑",
-      w: "๒",
-      x: "๓",
-      y: "๔",
-      z: "๕",
-      A: "๐",
-      B: "๑",
-      C: "๒",
-      D: "๓",
-      E: "๔",
-      F: "๕",
-      G: "๖",
-      H: "๗",
-      I: "๘",
-      J: "๙",
-      K: "๐",
-      L: "๑",
-      M: "๒",
-      N: "๓",
-      O: "๔",
-      P: "๕",
-      Q: "๖",
-      R: "๗",
-      S: "๘",
-      T: "๙",
-      U: "๐",
-      V: "๑",
-      W: "๒",
-      X: "๓",
-      Y: "๔",
-      Z: "๕",
-      0: "๐",
-      1: "๑",
-      2: "๒",
-      3: "๓",
-      4: "๔",
-      5: "๕",
-      6: "๖",
-      7: "๗",
-      8: "๘",
-      9: "๙",
-    };
-    return text
-      .split("")
-      .map((char) => fontMap[char] || char)
-      .join("");
-  }
-
-  getFont2(text) {
-    const fontMap = {
       a: "𝕒",
       b: "𝕓",
       c: "𝕔",
@@ -554,7 +484,7 @@ class TextFont {
       .join("");
   }
 
-  getFont3(text) {
+  getFont2(text) {
     const fontMap = {
       a: "𝗮",
       b: "𝗯",
@@ -625,7 +555,7 @@ class TextFont {
       .join("");
   }
 
-  getFont4(text) {
+  getFont3(text) {
     const fontMap = {
       a: "𝒶",
       b: "𝒷",
@@ -696,7 +626,7 @@ class TextFont {
       .join("");
   }
 
-  getFont5(text) {
+  getFont4(text) {
     const fontMap = {
       a: "𝓪",
       b: "𝓫",
@@ -767,7 +697,7 @@ class TextFont {
       .join("");
   }
 
-  getFont6(text) {
+  getFont5(text) {
     const fontMap = {
       a: "ⓐ",
       b: "ⓑ",
@@ -913,9 +843,23 @@ class NyxClient extends Client {
     this.voiceConnections = new Map();
     this.voiceConfig = {
       data: voice.data || "sx!",
-      streaming: true
+      streaming: voice.streaming !== undefined ? voice.streaming : true
     };
     this.intervals = new Set();
+
+    this.streamer = new Streamer(this);
+    this.streamController = null;
+
+    const streamOpts = voice.streamOpts || voice;
+    this.streamConfig = {
+      width: streamOpts.width || 1280,
+      height: streamOpts.height || 720,
+      fps: streamOpts.fps || 30,
+      bitrateKbps: streamOpts.bitrateKbps || 1000,
+      maxBitrateKbps: streamOpts.maxBitrateKbps || 2500,
+      hardwareAcceleration: streamOpts.hardware_acceleration || streamOpts.hardwareAcceleration || false,
+      videoCodec: streamOpts.videoCodec || "H264"
+    };
 
     this.weather = new Weather(options.tz || "Asia/Bangkok");
     this.sys = new SystemInfo();
@@ -929,7 +873,6 @@ class NyxClient extends Client {
       data: status.data || []
     };
 
-    // RPC configuration
     this.rpcConfig = {
       delay: rpc.delay || 4000,
       timestamp: rpc.timestamp || {},
@@ -945,7 +888,6 @@ class NyxClient extends Client {
       buttonFirst: rpc.buttonFirst || [],
       buttonSecond: rpc.buttonSecond || []
     };
-
 
     this.lib = {
       count: 0,
@@ -1068,59 +1010,271 @@ class NyxClient extends Client {
   async _onMessage(message) {
     try {
       if (message.author.id !== this.user.id) return;
-      
       if (!this.voiceEnabled) {
         fuck_logger("log", `Voice commands disabled for token: ${this.maskToken(this.TOKEN)}`);
         return;
       }
-      
-      const voiceCommand = this.voiceConfig.data || "sx!";
-      
-      if (!message.content.startsWith(voiceCommand)) {
-        return;
-      }
-      
-      const args = message.content.slice(voiceCommand.length).trim().split(" ");
-      const command = args[0];
+
+      const prefix = this.voiceConfig.data || "sx!";
+      if (!message.content.startsWith(prefix)) return;
+
+      const args = message.content.slice(prefix.length).trim().split(" ");
+      let command = args[0];
       const channelId = args[1];
-      
+      const url = args[2];
+
+      const aliases = {
+        j: "join",
+        pl: "play-live",
+        pc: "play-cam",
+        s: "stop-stream",
+        l: "leave",
+        ls: "list"
+      };
+
+      if (aliases[command]) command = aliases[command];
+
       if (!command) {
-        fuck_logger("warning", `Usage: ${voiceCommand} <join|leave|list> [channelId]`);
+        fuck_logger("warning", `Usage: ${prefix} <join|leave|list|play-live|play-cam|stop-stream>`);
         return;
       }
-      
+
       switch (command.toLowerCase()) {
-        case 'join':
-          if (!channelId) {
-            fuck_logger("warning", `Usage: ${voiceCommand} join <channelId>`);
-            return;
-          }
+        case "join":
+          if (!channelId) return fuck_logger("warning", `Usage: ${prefix} j <channelId>`);
           await this.connectToVoiceChannel(channelId, true, true, false);
           break;
-        case 'leave':
-        case 'disconnect':
-          if (channelId) {
-            this.disconnectFromVoiceChannel(channelId);
-          } else {
-            for (const [id] of this.voiceConnections) {
-              this.disconnectFromVoiceChannel(id);
-            }
+
+        case "play-live":
+        case "play-cam":
+          if (!channelId || !url) return fuck_logger("warning", `Usage: ${prefix} ${command} <channelId> <url>`);
+          await this.playVideoStream(channelId, url);
+          break;
+
+        case "stop-stream":
+          this.stopStream();
+          break;
+
+        case "leave":
+          this.stopStream();
+          if (channelId) this.disconnectFromVoiceChannel(channelId);
+          else {
+            this.streamer.leaveVoice();
+            for (const [id] of this.voiceConnections) this.disconnectFromVoiceChannel(id);
           }
           break;
-        case 'list':
+
+        case "list":
           fuck_logger("success", "Available voice channels:");
           this.channels.cache.forEach(ch => {
-            if (ch.type === 2 || ch.type === 'GUILD_VOICE') {
+            if (ch.type === 2 || ch.type === "GUILD_VOICE") {
               console.log(`- ${ch.name} (${ch.id})`);
             }
           });
           break;
+
         default:
           fuck_logger("warning", `Unknown command: ${command}`);
           break;
       }
+    } catch (err) {
+      fuck_logger("error", `Error processing voice command: ${err.message}`);
+    }
+  }
+
+
+  async resolveStreamUrl(url) {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
+    const needsResolution = /youtube\.com|youtu\.be|twitch\.tv|twitter\.com|x\.com/i.test(url);
+    
+    if (!needsResolution) {
+      return url;
+    }
+
+    fuck_logger("log", "Resolving stream URL...");
+
+    try {
+      if (/youtube\.com|youtu\.be/i.test(url)) {
+        const commands = [
+          { cmd: 'yt-dlp', args: '-f 18 --get-url' },
+          { cmd: 'yt-dlp', args: '-f "bestvideo[ext=mp4][protocol=https]+bestaudio[ext=m4a][protocol=https]/best[protocol=https][protocol!*=m3u]" --get-url' },
+          { cmd: 'yt-dlp', args: '-f "best[protocol=https][protocol!*=m3u]" --get-url' },
+          { cmd: 'yt-dlp', args: '-f "best" --get-url --no-check-formats' },
+          { cmd: 'youtube-dl', args: '-f 18 -g' }
+        ];
+
+        for (const { cmd, args } of commands) {
+          try {
+            fuck_logger("log", `Trying ${cmd} with format selection...`);
+            const { stdout, stderr } = await execAsync(`${cmd} ${args} "${url}"`, { timeout: 20000 });
+            const resolvedUrl = stdout.trim().split('\n')[0];
+            
+            if (resolvedUrl && resolvedUrl.startsWith('http')) {
+              if (resolvedUrl.includes('.m3u8') || resolvedUrl.includes('/manifest/')) {
+                fuck_logger("warning", "Skipping HLS manifest URL, trying next format...");
+                continue;
+              }
+              fuck_logger("success", `Stream URL resolved with ${cmd}`);
+              return resolvedUrl;
+            }
+          } catch (cmdError) {
+            fuck_logger("warning", `${cmd} with these args failed, trying next...`);
+            continue;
+          }
+        }
+      }
+
+      if (/youtube\.com|youtu\.be/i.test(url)) {
+        try {
+          const ytdl = require('ytdl-core');
+          fuck_logger("log", "Using ytdl-core to resolve YouTube URL...");
+          
+          const info = await ytdl.getInfo(url);
+          const format = ytdl.chooseFormat(info.formats, { 
+            quality: 'highest',
+            filter: (format) => format.hasVideo && format.hasAudio
+          });
+          
+          if (format && format.url) {
+            fuck_logger("success", "YouTube URL resolved with ytdl-core");
+            return format.url;
+          }
+        } catch (ytdlError) {
+          fuck_logger("warning", `ytdl-core failed: ${ytdlError.message}`);
+        }
+      }
+
+      const commands = [
+        'yt-dlp -f "best[ext=mp4]/best" --get-url',
+        'youtube-dl -f "best[ext=mp4]/best" -g'
+      ];
+
+      for (const cmd of commands) {
+        try {
+          const { stdout } = await execAsync(`${cmd} "${url}"`, { timeout: 15000 });
+          const resolvedUrl = stdout.trim().split('\n')[0];
+          fuck_logger("success", `Stream URL resolved with ${cmd.split(' ')[0]}`);
+          return resolvedUrl;
+        } catch (cmdError) {
+          fuck_logger("warning", `${cmd.split(' ')[0]} not available or failed`);
+          continue;
+        }
+      }
+
+      throw new Error("No URL resolver available");
+      
     } catch (error) {
-      fuck_logger("error", `Error processing voice command: ${error.message}`);
+      fuck_logger("error", `Failed to resolve URL: ${error.message}`);
+      fuck_logger("warning", "Install one of these URL resolvers:");
+      fuck_logger("warning", "  Option 1: pip install yt-dlp (recommended)");
+      fuck_logger("warning", "  Option 2: Download yt-dlp.exe from https://github.com/yt-dlp/yt-dlp/releases");
+      fuck_logger("warning", "  Option 3: npm install ytdl-core (may not work with recent YouTube changes)");
+      throw new Error("Could not resolve streaming URL. Install yt-dlp.");
+    }
+  }
+
+  async playVideoStream(channelId, url) {
+    try {
+      const channel = this.channels.cache.get(channelId);
+      if (!channel) {
+        fuck_logger("error", `Channel ${channelId} not found`);
+        return;
+      }
+
+      const isVoice =
+        channel.type === 2 || channel.type === "GUILD_VOICE" || channel.type === 13;
+      if (!isVoice) {
+        fuck_logger("error", `Channel ${channelId} is not a voice channel`);
+        return;
+      }
+
+      const current = this.user?.voice?.channelId;
+      if (current) {
+        if (current === channelId) {
+          fuck_logger("log", `Already connected to ${channelId}, proceeding with stream...`);
+        } else {
+          fuck_logger("log", `Already in ${current}, leaving before rejoining...`);
+          await this.streamer.leaveVoice().catch(() => {});
+          fuck_logger("log", `Joining voice channel ${channel.guild.id}/${channelId}`);
+          await this.streamer.joinVoice(channel.guild.id, channelId);
+        }
+      } else {
+        fuck_logger("log", `Joining voice channel ${channel.guild.id}/${channelId}`);
+        await this.streamer.joinVoice(channel.guild.id, channelId);
+      }
+
+      const { StageChannel } = require("discord.js-selfbot-v13");
+      if (channel instanceof StageChannel) {
+        await this.user?.voice?.setSuppressed(false).catch(() => {});
+      }
+
+      if (this.streamController) {
+        fuck_logger("log", "Stopping existing stream before starting new one...");
+        this.streamController.abort();
+      }
+      this.streamController = new AbortController();
+
+      fuck_logger("success", `Preparing stream from: ${url}`);
+
+      let streamUrl;
+      try {
+        streamUrl = await this.resolveStreamUrl(url);
+      } catch (resolveError) {
+        fuck_logger("error", resolveError.message);
+        this.streamer.leaveVoice();
+        return;
+      }
+
+      fuck_logger("log", `Using resolved URL for streaming`);
+
+      const { command, output } = prepareStream(
+        streamUrl,
+        {
+          width: this.streamConfig.width,
+          height: this.streamConfig.height,
+          frameRate: this.streamConfig.fps,
+          bitrateVideo: this.streamConfig.bitrateKbps,
+          bitrateVideoMax: this.streamConfig.maxBitrateKbps,
+          hardwareAcceleratedDecoding: this.streamConfig.hardwareAcceleration,
+          videoCodec: Utils.normalizeVideoCodec(this.streamConfig.videoCodec)
+        },
+        this.streamController.signal
+      );
+
+      command.on("error", (err) => {
+        fuck_logger("error", "FFmpeg error occurred");
+        fuck_logger("error", err.message);
+      });
+
+      fuck_logger("success", `Starting video stream in ${channel.name}`);
+
+      await playStream(output, this.streamer, undefined, this.streamController.signal)
+        .catch((err) => {
+          fuck_logger("error", `Stream playback error: ${err.message}`);
+          this.streamController?.abort();
+        });
+
+      this.isRunningStream = true;
+      this.voiceConnections.set(channelId, { channel, streaming: true });
+
+    } catch (error) {
+      fuck_logger("error", `Failed to play video stream: ${error.message}`);
+      this.stopStream();
+    }
+  }
+
+  stopStream() {
+    if (this.streamController) {
+      fuck_logger("log", "Stopping video stream...");
+      this.streamController.abort();
+      this.streamController = null;
+      this.isRunningStream = false;
+      fuck_logger("success", "Video stream stopped");
+    } else {
+      fuck_logger("warning", "No active stream to stop");
     }
   }
 
@@ -1155,13 +1309,11 @@ class NyxClient extends Client {
       fuck_logger("success", `Connected to voice channel: ${channel.name}`);
       this.voiceConnections.set(channelId, connection);
 
-      // Handle createStream option
       if (createStream) {
         try {
-          // Create an audio stream (example using PCM)
           const { createAudioPlayer, createAudioResource } = require('@discordjs/voice');
           const player = createAudioPlayer();
-          const resource = createAudioResource('./audio.mp3'); // Replace with your source
+          const resource = createAudioResource('./audio.mp3'); 
           player.play(resource);
           connection.subscribe(player);
 
@@ -1178,12 +1330,13 @@ class NyxClient extends Client {
     }
   }
 
-
   disconnectFromVoiceChannel(channelId) {
     try {
       const connection = this.voiceConnections.get(channelId);
       if (connection) {
-        connection.disconnect();
+        if (connection.disconnect) {
+          connection.disconnect();
+        }
         this.voiceConnections.delete(channelId);
         fuck_logger("success", `Disconnected from channel ${channelId}`);
       } else {
@@ -1193,7 +1346,7 @@ class NyxClient extends Client {
       fuck_logger("error", `Error disconnecting from voice channel: ${error.message}`);
     }
   }
-
+  
   startPingChecker() {
     const checkerId = setInterval(() => {
       if (this.isRunningStream) return;

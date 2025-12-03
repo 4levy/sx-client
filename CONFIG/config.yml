@@ -3,7 +3,7 @@ INPUTS:
     customStatus: true  # / false 
     voiceEnabled: true  # / false
     activity:
-      type: "STREAMING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
+      type: "LISTENING" # STREAMING, PLAYING, LISTENING, WATCHING, COMPETING
 
   - token: "value 2"
     customStatus: false  # / true 
@@ -16,7 +16,26 @@ OPTIONS:
   tz: "Asia/Bangkok" # default
 
 VOICE:
-  data: "sx!" # Default | join sx!join <vcid> - leave sx!leave
+  data: "sx!" # Command prefix | Examples: sx!join <vcid>, sx!leave
+  streaming: true # Enable/disable streaming features
+
+  # require ffmpeg 
+
+  commands_example : |
+    sx!j  = join
+    sx!l  = leave
+    sx!pl = play-live ( sx!pl <vcid> <url> )
+    sx!s  = stop-stream
+    sx!ls = list ( in console )
+
+
+  width: 1280          #  (default: 1280)
+  height: 720          #  (default: 720)
+  fps: 30              #  (default: 30)
+  bitrateKbps: 1000    #  (default: 1000)
+  maxBitrateKbps: 2500 #  (default: 2500)
+  hardware_acceleration: false #  (default: false)
+  videoCodec: "H264"   # Video codec: H264, H265, VP8, VP9 (default: H264)
 
 STATUS:
   delay: 4000 # default (Minimum 4000)
@@ -37,20 +56,20 @@ RPC:
 
   # this for type listening only
   timestamp:
-      #start: "2025-09-02T07:45:34.593Z" # ISO8601 | timestamp in milliseconds
-      #end: "2029-12-31T17:00:00.000Z" # ISO8601 | timestamp in milliseconds
+      start: "2025-09-02T07:45:34.593Z" # ISO8601 | timestamp in milliseconds
+      end: "2029-12-31T17:00:00.000Z" # ISO8601 | timestamp in milliseconds
 
   TwitchURL: "https://www.twitch.tv/4levy_z1"
-  # YoutubeURL: "https://www.youtube.com/@4levy"
+  #YoutubeURL: "https://www.youtube.com/@4levy"
 
   details:
-    - " ୨୧￤ {time:en:12} : 𓆩 ೀ 𓆪 {en=year:2} "
+    - "Details"
   state:
-    - "꒰ঌ ꒰ ˶>⸝⸝⸝<˵ ྀི꒱ ໒꒱"
+    - "State"
   assetsLargeText:
-    - "0nyx"
+    - "AssetsLargeText"
   assetsSmallText:
-    - "ଘ꒰ྀི^ ˕ ິ^  ྀི꒱"
+    - "AssetsSmallText"
   assetsLargeImage:
     - "https://i.postimg.cc/DzRFzTV6/angel_angelcore_aesthetic_fantasy_creatures_fantasy.jpg"
   assetsSmallImage:
