@@ -5,16 +5,18 @@
 
 const { Client, RichPresence, CustomStatus } = require("discord.js-selfbot-v13");
 const { Streamer, Utils, prepareStream, playStream } = require("@dank074/discord-video-stream");
-const moment = require("moment-timezone");
 const { schedule } = require("node-cron");
+
+const moment = require("moment-timezone");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
-require("colors");
 const si = require("systeminformation");
-const fetch = (...args) =>
-import("node-fetch").then(({ default: fetch }) => fetch(...args));
+require("colors");
+
+const fetch = (...args) => import("node-fetch").then(m => m.default(...args));
+
 
 process.removeAllListeners("warning");
 process.on("warning", (warning) => {
@@ -88,7 +90,7 @@ class GetExternalImage {
         return { bigImage: null, smallImage: null };
       }
 
-      const images = await getExternal(this.client, "1109522937989562409", ...validUrls);
+      const images = await getExternal(this.client, "1438613688406769778", ...validUrls);
       let finalUrl1 = null;
       let finalUrl2 = null;
 
@@ -1440,7 +1442,7 @@ class NyxClient extends Client {
       }
 
       const presence = new RichPresence(this)
-        .setApplicationId("1109522937989562409")
+        .setApplicationId("1438613688406769778")
         .setType(this.activityType);
 
       if (this.activityType === "LISTENING") {

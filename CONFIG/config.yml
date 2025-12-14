@@ -17,7 +17,7 @@ OPTIONS:
 
 VOICE:
   data: "sx!" # Command prefix | Examples: sx!join <vcid>, sx!leave
-  streaming: true # Enable/disable streaming features
+  streaming: false # Enable/disable streaming features
 
   # require ffmpeg 
 
@@ -54,11 +54,12 @@ STATUS:
 RPC:
   delay: 4000 # default (Minimum 4000)
 
-  # this for type listening only
+  # this for type listening only | comment to disable place "#" in the front start and end like #start ... #end
   timestamp:
       start: "2025-09-02T07:45:34.593Z" # ISO8601 | timestamp in milliseconds
       end: "2029-12-31T17:00:00.000Z" # ISO8601 | timestamp in milliseconds
 
+  # uncomment to enable switch both Youtube type, Twitch type activity 
   TwitchURL: "https://www.twitch.tv/4levy_z1"
   #YoutubeURL: "https://www.youtube.com/@4levy"
 
@@ -75,8 +76,8 @@ RPC:
   assetsSmallImage:
     - "https://i.pinimg.com/1200x/e6/b4/a7/e6b4a73f43ab3fdaed7c6af5b814dedd.jpg"
   buttonFirst:
-    - label: "> Bio <"
-      url: "https://0nyx-wha.vercel.app/"
+    - label: "> Server <"
+      url: "https://server.0nyx.wtf/"
   buttonSecond:
     - label: "[ Server ]"
       url: "https://discord.gg/pQVtDP8GEE"
