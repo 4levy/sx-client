@@ -1,6 +1,6 @@
 - leave a star for more fix & update
   - [Video](https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX) 
-  - [Website](https://0nyx-wha.vercel.app/config/suckmadick)
+  - [Config Generator](https://0nyx-wha.vercel.app/config/suckmadick)
   - [Video how to host on bot-hosting](https://youtu.be/EkvTiYFVNAI?si=9UNVkoNkvHngzKMe)
 
 ---
