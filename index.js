@@ -6,17 +6,43 @@
 const { Client, RichPresence, CustomStatus } = require("discord.js-selfbot-v13");
 const { Streamer, Utils, prepareStream, playStream } = require("@dank074/discord-video-stream");
 const { schedule } = require("node-cron");
-
 const moment = require("moment-timezone");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
 const si = require("systeminformation");
+const chalkAnimation = require("chalk-animation").default;
 require("colors");
 
 const fetch = (...args) => import("node-fetch").then(m => m.default(...args));
 
+
+const ASCII  = `
+                       +##########+                       
+                  ######################                  
+                ##########################                
+              ##############################              
+           ####################################           
+         ########################################         
+      ##############################################      
+     ################ ###############################     
+       #############   ############################       
+         ########### #  #### ####################         
+             #######     ####  ##############             
+             ######  ###    ##    ###  ######             
+             #############      #############             
+             ####.....    .    .    .....####.            
+             #######      .----.      #######             
+             ###########  #----#  ###########             
+             ########### +#    #+ ###########             
+             ##########    +##+    ##########             
+             ###########+   ##   +###########             
+             ###########+        +###########             
+              -# #########+####+######### #+              
+                # ####  ### ## ###  #### #                
+                     #    #  . #    #                     
+`;
 
 process.removeAllListeners("warning");
 process.on("warning", (warning) => {
@@ -28,27 +54,50 @@ process.on("warning", (warning) => {
 const originalStderrWrite = process.stderr.write;
 process.stderr.write = (chunk, ...args) => {
   if (typeof chunk === "string" && chunk.includes("The system cannot find the path specified")) {
-    return; 
+    return;
   }
   return originalStderrWrite.call(process.stderr, chunk, ...args);
 };
 
 const colors = {
   reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  dim: "\x1b[2m",
   green: "\x1b[32m",
   red: "\x1b[31m",
   yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
+  gray: "\x1b[90m",
 };
 
-// logger
 function fuck_logger(type, message) {
+  const now = new Date();
+  const timestamp = now.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+  const date = now.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric"
+  });
+
   const tags = {
-    success: `${colors.green}[ SUCCESSFULLY ]${colors.reset}`,
-    error: `${colors.red}[ ERROR ]${colors.reset}`,
-    warning: `${colors.yellow}[ WARNING ]${colors.reset}`,
+    success: `${colors.green}${colors.bright}SUCCESS${colors.reset}`,
+    error: `${colors.red}${colors.bright}ERROR${colors.reset}`,
+    warning: `${colors.yellow}${colors.bright}WARNING${colors.reset}`,
+    info: `${colors.blue}${colors.bright}INFO${colors.reset}`,
+    debug: `${colors.magenta}${colors.bright}DEBUG${colors.reset}`,
   };
-  const tag = tags[type.toLowerCase()] || "[ LOG ]";
-  console.log(`${tag} ${message}`);
+
+  const tag = tags[type.toLowerCase()] || `${colors.cyan}${colors.bright}LOG${colors.reset}`;
+  const timeStr = `${colors.gray}[${date} ${timestamp}]${colors.reset}`;
+
+  console.log(`${timeStr} ${tag} ${colors.dim}→${colors.reset} ${message}`);
 }
 
 process.on("uncaughtException", (error) => {
@@ -116,16 +165,63 @@ class GetExternalImage {
 
 // config.yml
 let config;
-try {
-  const configPath = path.join(__dirname, "CONFIG", "config.yml");
-  const fileContents = fs.readFileSync(configPath, "utf8");
-  config = yaml.load(fileContents);
-  global.config = config;
+(function loadConfig() {
+  function findConfigFile(dir, filename = "config.yml", depth = 0, maxDepth = 5) {
+    if (depth > maxDepth) return null;
 
-} catch (error) {
-  fuck_logger("error", `Failed to load config.yml: ${error.message}`);
-  process.exit(1);
-}
+    try {
+      const items = fs.readdirSync(dir);
+
+      for (const item of items) {
+        if (item === filename) {
+          const fullPath = path.join(dir, item);
+          if (fs.statSync(fullPath).isFile()) {
+            return fullPath;
+          }
+        }
+      }
+
+      for (const item of items) {
+        const fullPath = path.join(dir, item);
+
+        if (["node_modules", ".git", ".vscode", "dist", "build"].includes(item)) {
+          continue;
+        }
+
+        try {
+          if (fs.statSync(fullPath).isDirectory()) {
+            const found = findConfigFile(fullPath, filename, depth + 1, maxDepth);
+            if (found) return found;
+          }
+        } catch (err) {
+          continue;
+        }
+      }
+    } catch (err) {
+      return null;
+    }
+
+    return null;
+  }
+
+  try {
+    const configPath = findConfigFile(__dirname);
+
+    if (!configPath) {
+      fuck_logger("error", "Could not find config.yml anywhere in the project directory");
+      process.exit(1);
+    }
+
+    const fileContents = fs.readFileSync(configPath, "utf8");
+    config = yaml.load(fileContents);
+    global.config = config;
+    fuck_logger("success", `Loaded config from: ${configPath}`);
+
+  } catch (error) {
+    fuck_logger("error", `Failed to load config.yml: ${error.message}`);
+    process.exit(1);
+  }
+})();
 
 
 // Weather
@@ -268,7 +364,7 @@ class SystemInfo {
     this.cpuSpeedGHz = (os.cpus()[0]?.speed / 1000 || 0).toFixed(1);
     this.cpuUsage = 0;
 
-    this.totalRAM = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2); 
+    this.totalRAM = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
     this.usedRAM = 0;
     this.freeRAM = 0;
     this.ramUsage = 0;
@@ -388,8 +484,8 @@ class Emoji {
     return isNaN(parsedHour)
       ? "Invalid hour"
       : parsedHour >= 6 && parsedHour < 18
-      ? "☀️"
-      : "🌙";
+        ? "☀️"
+        : "🌙";
   }
 
   getClock(hour) {
@@ -793,7 +889,7 @@ class NyxClient extends Client {
     } catch (error) {
       fuck_logger("warning", `Pre-patching attempt failed: ${error.message}`);
     }
-    
+
     super({
       checkUpdate: false,
       autoRedeemNitro: false,
@@ -822,7 +918,7 @@ class NyxClient extends Client {
       rest: {
         userAgentAppendix: "Discord-Selfbot/1.0.0",
         timeout: 30000,
-        retries: 3, 
+        retries: 3,
       },
       messageCacheMaxSize: 5,
       messageCacheLifetime: 60,
@@ -930,7 +1026,7 @@ class NyxClient extends Client {
     this.on("ready", this._onReady.bind(this));
     this.on("error", this._onError.bind(this));
     this.on("messageCreate", this._onMessage.bind(this));
-    
+
     this.on("voiceStateUpdate", (oldState, newState) => {
       try {
         if (newState.member.id === this.user.id) {
@@ -986,7 +1082,7 @@ class NyxClient extends Client {
 
   _onError(error) {
     fuck_logger("error", `Client encountered an error: ${error.message || error}`);
-    
+
     if (error.message && error.message.includes("WebSocket")) {
       fuck_logger("warning", "WebSocket error detected, attempting to continue...");
       return;
@@ -994,9 +1090,9 @@ class NyxClient extends Client {
 
     if (error.message && (error.message.includes("voice") || error.message.includes("connection was established"))) {
       fuck_logger("warning", "Voice connection error detected, continuing without voice...");
-      return; 
+      return;
     }
-    
+
     if (error.message && error.message.includes("Cannot read properties of null")) {
       fuck_logger("warning", "Attempting to recover from null property error...");
       if (this.user && !this.user.settings) {
@@ -1091,7 +1187,7 @@ class NyxClient extends Client {
     const execAsync = promisify(exec);
 
     const needsResolution = /youtube\.com|youtu\.be|twitch\.tv|twitter\.com|x\.com/i.test(url);
-    
+
     if (!needsResolution) {
       return url;
     }
@@ -1113,7 +1209,7 @@ class NyxClient extends Client {
             fuck_logger("log", `Trying ${cmd} with format selection...`);
             const { stdout, stderr } = await execAsync(`${cmd} ${args} "${url}"`, { timeout: 20000 });
             const resolvedUrl = stdout.trim().split('\n')[0];
-            
+
             if (resolvedUrl && resolvedUrl.startsWith('http')) {
               if (resolvedUrl.includes('.m3u8') || resolvedUrl.includes('/manifest/')) {
                 fuck_logger("warning", "Skipping HLS manifest URL, trying next format...");
@@ -1133,13 +1229,13 @@ class NyxClient extends Client {
         try {
           const ytdl = require('ytdl-core');
           fuck_logger("log", "Using ytdl-core to resolve YouTube URL...");
-          
+
           const info = await ytdl.getInfo(url);
-          const format = ytdl.chooseFormat(info.formats, { 
+          const format = ytdl.chooseFormat(info.formats, {
             quality: 'highest',
             filter: (format) => format.hasVideo && format.hasAudio
           });
-          
+
           if (format && format.url) {
             fuck_logger("success", "YouTube URL resolved with ytdl-core");
             return format.url;
@@ -1167,7 +1263,7 @@ class NyxClient extends Client {
       }
 
       throw new Error("No URL resolver available");
-      
+
     } catch (error) {
       fuck_logger("error", `Failed to resolve URL: ${error.message}`);
       fuck_logger("warning", "Install one of these URL resolvers:");
@@ -1199,7 +1295,7 @@ class NyxClient extends Client {
           fuck_logger("log", `Already connected to ${channelId}, proceeding with stream...`);
         } else {
           fuck_logger("log", `Already in ${current}, leaving before rejoining...`);
-          await this.streamer.leaveVoice().catch(() => {});
+          await this.streamer.leaveVoice().catch(() => { });
           fuck_logger("log", `Joining voice channel ${channel.guild.id}/${channelId}`);
           await this.streamer.joinVoice(channel.guild.id, channelId);
         }
@@ -1210,7 +1306,7 @@ class NyxClient extends Client {
 
       const { StageChannel } = require("discord.js-selfbot-v13");
       if (channel instanceof StageChannel) {
-        await this.user?.voice?.setSuppressed(false).catch(() => {});
+        await this.user?.voice?.setSuppressed(false).catch(() => { });
       }
 
       if (this.streamController) {
@@ -1315,7 +1411,7 @@ class NyxClient extends Client {
         try {
           const { createAudioPlayer, createAudioResource } = require('@discordjs/voice');
           const player = createAudioPlayer();
-          const resource = createAudioResource('./audio.mp3'); 
+          const resource = createAudioResource('./audio.mp3');
           player.play(resource);
           connection.subscribe(player);
 
@@ -1348,7 +1444,7 @@ class NyxClient extends Client {
       fuck_logger("error", `Error disconnecting from voice channel: ${error.message}`);
     }
   }
-  
+
   startPingChecker() {
     const checkerId = setInterval(() => {
       if (this.isRunningStream) return;
@@ -1370,7 +1466,7 @@ class NyxClient extends Client {
 
   getDefaultActivityName(activityType, platform) {
     if (platform) return platform;
-    
+
     switch (activityType) {
       case "STREAMING":
         return "Streaming";
@@ -1415,12 +1511,12 @@ class NyxClient extends Client {
       const watchUrls = [];
       if (this.rpcConfig.twitchURL) watchUrls.push(this.rpcConfig.twitchURL);
       if (this.rpcConfig.youtubeURL) watchUrls.push(this.rpcConfig.youtubeURL);
-      
+
       let watchUrl = null;
       if (watchUrls.length > 0) {
         watchUrl = watchUrls[this.index.url % watchUrls.length];
       }
-      
+
       if (this.activityType === "STREAMING") {
         if (!watchUrl || !this.getExternal.isValidURL(watchUrl)) {
           fuck_logger("warning", "No valid streaming URL found for STREAMING type. Using fallback URL.");
@@ -1453,13 +1549,13 @@ class NyxClient extends Client {
             const total = end - start;
             const current = Date.now() % total;
             presence.setStartTimestamp(Date.now() - current)
-                   .setEndTimestamp(Date.now() + (total - current));
+              .setEndTimestamp(Date.now() + (total - current));
           }
         }
       } else if (this.activityType === "STREAMING" && watchUrl) {
         presence.setURL(watchUrl);
       }
-      
+
       const details = this.getNextItem(this.rpcConfig.details, 'details');
       let activityName;
 
@@ -1506,7 +1602,10 @@ class NyxClient extends Client {
 
       if (largeImage || smallImage) {
         try {
-          const images = await this.getImage(largeImage, smallImage);
+          const processedLargeImage = largeImage ? this.SPT(largeImage) : null;
+          const processedSmallImage = smallImage ? this.SPT(smallImage) : null;
+
+          const images = await this.getImage(processedLargeImage, processedSmallImage);
           if (images.bigImage) {
             presence.setAssetsLargeImage(images.bigImage);
           }
@@ -1577,10 +1676,10 @@ class NyxClient extends Client {
 
   updateIndices() {
     this.lib.count++;
-    
+
     const urlCount = [this.rpcConfig.twitchURL, this.rpcConfig.youtubeURL].filter(Boolean).length;
     this.index.url = (this.index.url + 1) % Math.max(1, urlCount);
-    
+
     this.index.bt_1 = (this.index.bt_1 + 1) % Math.max(1, this.rpcConfig.buttonFirst?.length || 1);
     this.index.bt_2 = (this.index.bt_2 + 1) % Math.max(1, this.rpcConfig.buttonSecond?.length || 1);
   }
@@ -1593,7 +1692,7 @@ class NyxClient extends Client {
       }
 
       const statusData = this.statusConfig.data;
-      const delay = Math.max(this.statusConfig.delay || 4000, 4000); 
+      const delay = Math.max(this.statusConfig.delay || 4000, 4000);
 
       if (!Array.isArray(statusData) || statusData.length === 0) {
         fuck_logger("warning", "No status data available");
@@ -1628,7 +1727,7 @@ class NyxClient extends Client {
 
       const currentPresence = this.user?.presence;
       const activities = [customStatus];
-      
+
       if (this.currentStreamingActivity) {
         activities.push(this.currentStreamingActivity);
       }
@@ -1650,12 +1749,19 @@ class NyxClient extends Client {
 
   async getImage(bigImg, smallImg) {
     try {
-      const cachedBigImage = this.cacheImage.get(bigImg);
-      const cachedSmallImage = this.cacheImage.get(smallImg);
+      const validBigImg = bigImg && bigImg.trim() && this.getExternal.isValidURL(bigImg) ? bigImg : null;
+      const validSmallImg = smallImg && smallImg.trim() && this.getExternal.isValidURL(smallImg) ? smallImg : null;
+
+      if (!validBigImg && !validSmallImg) {
+        return { bigImage: null, smallImage: null };
+      }
+
+      const cachedBigImage = validBigImg ? this.cacheImage.get(validBigImg) : null;
+      const cachedSmallImage = validSmallImg ? this.cacheImage.get(validSmallImg) : null;
 
       let fetchedImages = { bigImage: null, smallImage: null };
       try {
-        fetchedImages = await this.getExternal.get(bigImg, smallImg);
+        fetchedImages = await this.getExternal.get(validBigImg, validSmallImg);
       } catch (error) {
         fuck_logger("warning", `Error fetching images: ${error.message}`);
       }
@@ -1663,8 +1769,8 @@ class NyxClient extends Client {
       const finalBigImage = fetchedImages.bigImage || cachedBigImage || null;
       const finalSmallImage = fetchedImages.smallImage || cachedSmallImage || null;
 
-      if (fetchedImages.bigImage) this.cacheImage.set(bigImg, fetchedImages.bigImage);
-      if (fetchedImages.smallImage) this.cacheImage.set(smallImg, fetchedImages.smallImage);
+      if (fetchedImages.bigImage && validBigImg) this.cacheImage.set(validBigImg, fetchedImages.bigImage);
+      if (fetchedImages.smallImage && validSmallImg) this.cacheImage.set(validSmallImg, fetchedImages.smallImage);
 
       return { bigImage: finalBigImage, smallImage: finalSmallImage };
     } catch (error) {
@@ -1694,7 +1800,7 @@ class NyxClient extends Client {
     if (!text) return text || null;
 
     try {
-      const { weather, sys, emoji, textFont, lib } = this;
+      const { weather, sys, emoji, textFont } = this;
       const currentMoment = moment()
         .locale("th")
         .tz(weather.tz || this.config.OPTIONS?.tz || this.config.options?.tz || "Asia/Bangkok");
@@ -1803,8 +1909,8 @@ class NyxClient extends Client {
 
         // User
         "user:name": this.user?.username || "User",
-        "user:icon": this.user?.displayAvatarURL() || "",
-        "user:banner": this.user?.bannerURL() || "",
+        "user:icon": this.user?.displayAvatarURL({ dynamic: true, size: 1024 }) || "",
+        "user:banner": this.user?.bannerURL({ dynamic: true, size: 1024 }) || "",
         "guild=members": (guildId) => {
           try {
             return this.guilds.cache.get(guildId)?.memberCount || "?";
@@ -1842,7 +1948,25 @@ class NyxClient extends Client {
         try {
           const processedContent = content.replace(
             /\{([^{}]+)\}/g,
-            (_, key) => variables[key] || key
+            (_, key) => {
+              if (key in variables) {
+                const value = variables[key];
+                return typeof value === 'function' ? (value() ?? "") : (value ?? "");
+              }
+
+              if (key.includes(':')) {
+                const [funcName, param] = key.split(':', 2);
+                if (funcName in variables && typeof variables[funcName] === 'function') {
+                  try {
+                    return variables[funcName](param) ?? "";
+                  } catch (e) {
+                    return key;
+                  }
+                }
+              }
+
+              return key;
+            }
           );
           return (
             textFont[`getFont${fontNum}`]?.(processedContent) ||
@@ -1859,7 +1983,24 @@ class NyxClient extends Client {
             .replace(/\{NF(\d)\((.*?)\)\}/g, (_, num, content) => {
               return processFont(num, content);
             })
-            .replace(/\{([^{}]+)\}/g, (_, key) => variables[key] || key);
+            .replace(/\{([^{}]+)\}/g, (_, key) => {
+              if (key in variables) {
+                const value = variables[key];
+                return typeof value === 'function' ? (value() ?? "") : (value ?? "");
+              }
+              if (key.includes(':')) {
+                const [funcName, param] = key.split(':', 2);
+                if (funcName in variables && typeof variables[funcName] === 'function') {
+                  try {
+                    return variables[funcName](param) ?? "";
+                  } catch (e) {
+                    return key;
+                  }
+                }
+              }
+
+              return key;
+            });
         } catch (e) {
           return input;
         }
@@ -1896,7 +2037,7 @@ class NyxClient extends Client {
   stopAllIntervals() {
     for (let id of this.intervals) clearInterval(id);
     this.intervals.clear();
-    
+
     for (const [channelId, connection] of this.voiceConnections) {
       try {
         connection.disconnect();
@@ -1990,9 +2131,9 @@ class nyx {
     try {
       const inputs = config.INPUTS || config.inputs || [];
       const inputArray = Array.isArray(inputs) ? inputs : [inputs];
-      
+
       const enabledTokens = inputArray.filter(input => input.ignore !== true && input.token);
-      
+
       if (enabledTokens.length === 0) {
         fuck_logger("error", "No valid tokens found in configuration");
         return { success: false, error: "No valid tokens" };
@@ -2004,7 +2145,7 @@ class nyx {
       for (const input of enabledTokens) {
         try {
           const token = input.token.replace(/["']/g, '').trim();
-          
+
           if (!token || token.includes("SELFBOT TOKEN")) {
             fuck_logger("warning", "Invalid token format, skipping");
             failedCount++;
@@ -2065,29 +2206,36 @@ class nyx {
 async function main() {
   try {
     console.clear();
+    const rainbow = chalkAnimation.radar(ASCII);
+
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    rainbow.stop();
+    console.log(ASCII)
+    console.log('\n'); 
+
     const streamManager = new nyx();
-    
+
     fuck_logger("success", "Loaded");
-    
+
     const result = await streamManager.startStream(config);
-    
+
     if (result.success) {
       fuck_logger("success", `Successfully started ${result.successCount}/${result.totalCount} client(s)`);
       if (result.failedCount > 0) {
         fuck_logger("warning", `Failed to start ${result.failedCount} client(s)`);
       }
-      
+
       process.on('SIGINT', async () => {
-        fuck_logger("log", "Shutting down gracefully...");
+        fuck_logger("info", "Shutting down gracefully...");
         await streamManager.stopStream();
         process.exit(0);
       });
-      
+
     } else {
       fuck_logger("error", `Failed to start any clients. ${result.failedCount || 0} token(s) failed`);
       process.exit(1);
     }
-    
+
   } catch (error) {
     fuck_logger("error", `Error starting the bot: ${error.message}`);
     process.exit(1);
