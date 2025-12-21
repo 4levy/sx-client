@@ -1,6 +1,6 @@
 - leave a star for more fix & update
   - [Video](https://youtu.be/TU7zaK3Bw8c?si=C5U-Vv1TLMMnTZSX) 
-  - [Config Generator](https://0nyx-wha.vercel.app/config/suckmadick)
+  - [Config Generator](https://0nyx.wtf/config/suckmadick)
   - [Video how to host on bot-hosting](https://youtu.be/EkvTiYFVNAI?si=9UNVkoNkvHngzKMe)
 
 ---
@@ -20,8 +20,8 @@
 ---
 
 <p align="center">
-  <a href="https://star-history.com/#umrfyn/sx-client&Tips-Discord/sx-client&Date&theme=dark">
-    <img src="https://api.star-history.com/svg?repos=umrfyn/sx-client&type=Date&theme=dark"">
+  <a href="https://star-history.com/#umrfyn/sx-client&Tips-Discord/sx-client&Date&theme=light">
+    <img src="https://api.star-history.com/svg?repos=umrfyn/sx-client&type=Date&theme=light"">
   </a>
 </p>
 
