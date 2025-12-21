@@ -16,10 +16,12 @@ OPTIONS:
   tz: "Asia/Bangkok" # default
 
 VOICE:
+  autoRejoinDelay: 5000 # default
   data: "sx!" # Command prefix | Examples: sx!join <vcid>, sx!leave
-  streaming: false # Enable/disable streaming features
 
-  # require ffmpeg 
+
+  # require ffmpeg
+  ffmpeg: false # Default 
 
   commands_example : |
     sx!j  = join

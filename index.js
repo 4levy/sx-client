@@ -18,30 +18,20 @@ require("colors");
 const fetch = (...args) => import("node-fetch").then(m => m.default(...args));
 
 
-const ASCII  = `
-                       +##########+                       
-                  ######################                  
-                ##########################                
-              ##############################              
-           ####################################           
-         ########################################         
-      ##############################################      
-     ################ ###############################     
-       #############   ############################       
-         ########### #  #### ####################         
-             #######     ####  ##############             
-             ######  ###    ##    ###  ######             
-             #############      #############             
-             ####.....    .    .    .....####.            
-             #######      .----.      #######             
-             ###########  #----#  ###########             
-             ########### +#    #+ ###########             
-             ##########    +##+    ##########             
-             ###########+   ##   +###########             
-             ###########+        +###########             
-              -# #########+####+######### #+              
-                # ####  ### ## ###  #### #                
-                     #    #  . #    #                     
+const ASCII = `
+
+        ░████░        ░█████░░      
+      ░█████████░   ░████████░      
+       ███████████████████████░     
+      ░████████████████████████     
+      █████████████████████████░    
+     ██████████████████████████▒░   
+     ████████████░  ▒████████████   
+     ██████░▒███░   ░███  ░██████▒  
+     ████░                 ░▒█████░ 
+     ███▓░                   ░█▓██░ 
+     ██                             
+     ░                              
 `;
 
 process.removeAllListeners("warning");
@@ -941,8 +931,13 @@ class NyxClient extends Client {
     this.voiceConnections = new Map();
     this.voiceConfig = {
       data: voice.data || "sx!",
-      streaming: voice.streaming !== undefined ? voice.streaming : true
+      streaming: voice.streaming !== undefined ? voice.streaming : true,
+      ffmpegEnabled: voice.ffmpeg === true,
+      autoRejoinDelay: voice.autoRejoinDelay || 5000
     };
+    this.lastVoiceChannelId = null;
+    this.lastVoiceGuildId = null;
+    this.isAutoRejoining = false;
     this.intervals = new Set();
 
     this.streamer = new Streamer(this);
@@ -1029,7 +1024,39 @@ class NyxClient extends Client {
 
     this.on("voiceStateUpdate", (oldState, newState) => {
       try {
-        if (newState.member.id === this.user.id) {
+        if (newState.member?.id === this.user?.id) {
+          // User joined or switched to a channel
+          if (newState.channelId) {
+            this.lastVoiceChannelId = newState.channelId;
+            this.lastVoiceGuildId = newState.guild?.id;
+            this.isAutoRejoining = false;
+            fuck_logger("log", `Voice state: Joined/switched to channel ${newState.channelId}`);
+          }
+          // User left a channel (disconnected)
+          else if (oldState.channelId && !newState.channelId) {
+            const channelId = this.lastVoiceChannelId || oldState.channelId;
+            const guildId = this.lastVoiceGuildId || oldState.guild?.id;
+
+            if (channelId && guildId && !this.isAutoRejoining) {
+              this.isAutoRejoining = true;
+              fuck_logger("warning", `Disconnected from voice channel. Auto-rejoining in ${this.voiceConfig.autoRejoinDelay}ms...`);
+
+              setTimeout(async () => {
+                try {
+                  if (this.voiceConfig.ffmpegEnabled) {
+                    await this.streamer.joinVoice(guildId, channelId);
+                  } else {
+                    await this.connectToVoiceChannel(channelId, true, true, false);
+                  }
+                  fuck_logger("success", `Auto-rejoined voice channel ${channelId}`);
+                } catch (rejoinErr) {
+                  fuck_logger("error", `Failed to auto-rejoin: ${rejoinErr.message}`);
+                } finally {
+                  this.isAutoRejoining = false;
+                }
+              }, this.voiceConfig.autoRejoinDelay);
+            }
+          }
         }
       } catch (err) {
         fuck_logger("warning", `Voice state update error: ${err.message}`);
@@ -1140,11 +1167,32 @@ class NyxClient extends Client {
       switch (command.toLowerCase()) {
         case "join":
           if (!channelId) return fuck_logger("warning", `Usage: ${prefix} j <channelId>`);
-          await this.connectToVoiceChannel(channelId, true, true, false);
+          if (this.voiceConfig.ffmpegEnabled) {
+            // Use ffmpeg streamer for joining (supports streaming features)
+            const channel = this.channels.cache.get(channelId);
+            if (!channel) {
+              fuck_logger("error", `Channel ${channelId} not found`);
+              break;
+            }
+            const isVoice = channel.type === 2 || channel.type === "GUILD_VOICE" || channel.type === 13;
+            if (!isVoice) {
+              fuck_logger("error", `Channel ${channelId} is not a voice channel`);
+              break;
+            }
+            fuck_logger("log", `Joining voice channel with ffmpeg streamer: ${channel.name}`);
+            await this.streamer.joinVoice(channel.guild.id, channelId);
+            fuck_logger("success", `Connected to voice channel (ffmpeg mode): ${channel.name}`);
+          } else {
+            await this.connectToVoiceChannel(channelId, true, true, false);
+          }
           break;
 
         case "play-live":
         case "play-cam":
+          if (!this.voiceConfig.ffmpegEnabled) {
+            fuck_logger("warning", "ffmpeg is disabled in config. Enable it with 'ffmpeg: true' to use streaming commands.");
+            break;
+          }
           if (!channelId || !url) return fuck_logger("warning", `Usage: ${prefix} ${command} <channelId> <url>`);
           await this.playVideoStream(channelId, url);
           break;
@@ -1902,10 +1950,10 @@ class NyxClient extends Client {
         "cpu:speed": sys.cpuSpeedGHz || "0.0",
         "cpu:usage": sys.cpuUsage || 0,
         "ram:usage": sys.ramUsage || 0,
-        "uptime:days": Math.trunc((this.uptime || 0) / 86400000),
-        "uptime:hours": Math.trunc(((this.uptime || 0) / 3600000) % 24),
-        "uptime:minutes": Math.trunc(((this.uptime || 0) / 60000) % 60),
-        "uptime:seconds": Math.trunc(((this.uptime || 0) / 1000) % 60),
+        "uptime:days": Math.trunc(os.uptime() / 86400),
+        "uptime:hours": Math.trunc((os.uptime() / 3600) % 24),
+        "uptime:minutes": Math.trunc((os.uptime() / 60) % 60),
+        "uptime:seconds": Math.trunc(os.uptime() % 60),
 
         // User
         "user:name": this.user?.username || "User",
@@ -2208,10 +2256,11 @@ async function main() {
     console.clear();
     const rainbow = chalkAnimation.radar(ASCII);
 
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     rainbow.stop();
+    console.clear();
     console.log(ASCII)
-    console.log('\n'); 
+    console.log('\n');
 
     const streamManager = new nyx();
 
