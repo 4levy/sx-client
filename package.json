@@ -1,5 +1,5 @@
 {
-  "version": "0.0.6ac",
+  "version": "0.0.7",
   "dependencies": {
     "@dank074/discord-video-stream": "^5.0.2",
     "@distube/ytdl-core": "^4.16.12",
